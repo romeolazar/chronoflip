@@ -1,0 +1,14 @@
+{
+  "name": "chronoflip",
+  "version": "2.4.1",
+  "private": true,
+  "description": "ChronoFlip — a zero-dependency ambient clock, weather, and calendar dashboard",
+  "license": "MIT",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js && node --check public/app.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

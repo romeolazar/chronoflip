@@ -1,0 +1,30 @@
+services:
+  dashboard:
+    build: .
+    container_name: chronoflip
+    restart: unless-stopped
+    ports:
+      - "${DASHBOARD_PORT:-8080}:8080"
+    volumes:
+      - ./calendar:/data/calendar:ro
+    environment:
+      PORT: 8080
+      LOCATION_NAME: "${LOCATION_NAME:-Bucharest}"
+      LATITUDE: "${LATITUDE:-44.4268}"
+      LONGITUDE: "${LONGITUDE:-26.1025}"
+      TEMPERATURE_UNIT: "${TEMPERATURE_UNIT:-celsius}"
+      WIND_SPEED_UNIT: "${WIND_SPEED_UNIT:-kmh}"
+      TIME_FORMAT: "${TIME_FORMAT:-24}"
+      SHOW_SECONDS: "${SHOW_SECONDS:-false}"
+      CLOCK_POSITION: "${CLOCK_POSITION:-center}"
+      LOCALE: "${LOCALE:-en-GB}"
+      TIME_ZONE: "${TIME_ZONE:-Europe/Bucharest}"
+      FORECAST_DAYS: "${FORECAST_DAYS:-5}"
+      CALENDAR_ICS_URL: "${CALENDAR_ICS_URL:-}"
+      CALENDAR_ICS_FILE: "${CALENDAR_ICS_FILE:-/data/calendar/calendar.ics}"
+      CALENDAR_DAYS: "${CALENDAR_DAYS:-7}"
+      CALENDAR_MAX_EVENTS: "${CALENDAR_MAX_EVENTS:-4}"
+      DIM_START: "${DIM_START:-22}"
+      DIM_END: "${DIM_END:-7}"
+      DIM_LEVEL: "${DIM_LEVEL:-0.72}"
+      BURN_IN_SHIFT: "${BURN_IN_SHIFT:-true}"

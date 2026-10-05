@@ -1,0 +1,11 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//ChronoFlip//Example Calendar//EN
+BEGIN:VEVENT
+UID:example-appointment@oled-dashboard
+DTSTART;TZID=Europe/Bucharest:20261006T090000
+DTEND;TZID=Europe/Bucharest:20261006T100000
+SUMMARY:Example appointment
+LOCATION:Home
+END:VEVENT
+END:VCALENDAR
