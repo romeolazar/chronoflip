@@ -3,6 +3,11 @@
 ChronoFlip is an original MIT-licensed implementation. It has no
 third-party runtime packages, remote fonts, or copied visual assets.
 
+The self-hosted **Roboto** webfont is distributed under the SIL Open Font
+License 1.1. Copyright 2011 The Roboto Project Authors. The complete license
+is included at `public/fonts/OFL.txt`. Font source and metadata:
+[Google Fonts Roboto](https://github.com/google/fonts/tree/main/ofl/roboto).
+
 The optional **Classic Weather** display style was created as a clean-room
 interpretation of the broad retro pattern of two large flip-clock panels above
 a weather console. These open-source projects were useful visual references:

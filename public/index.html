@@ -8,7 +8,11 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>ChronoFlip</title>
-    <link rel="stylesheet" href="/styles.css?v=2.4.1">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+    <link rel="manifest" href="/site.webmanifest">
+    <link rel="stylesheet" href="/styles.css?v=2.7.1">
   </head>
   <body>
     <main class="dashboard" id="dashboard">
@@ -33,7 +37,6 @@
               </div>
             </div>
           </div>
-          <span class="meridiem" id="meridiem" hidden></span>
         </div>
         <div class="date-line" id="date-line">Monday, 5 October</div>
         </section>
@@ -112,6 +115,17 @@
         </section>
 
         <section class="settings-section">
+          <h3 data-i18n="typography">Display font</h3>
+          <div class="choice-grid two font-options" id="font-options">
+            <button type="button" data-font-family="modern"><i class="font-preview modern">Aa</i><span data-i18n="fontModern">Modern</span></button>
+            <button type="button" data-font-family="condensed"><i class="font-preview condensed">Aa</i><span data-i18n="fontCondensed">Condensed</span></button>
+            <button type="button" data-font-family="roboto"><i class="font-preview roboto">Aa</i><span data-i18n="fontRoboto">Roboto</span></button>
+            <button type="button" data-font-family="mono"><i class="font-preview mono">Aa</i><span data-i18n="fontMono">Monospace</span></button>
+          </div>
+          <p class="field-help" data-i18n="fontHelp">Applies to the clock digits, labels, weather, date, calendar, and settings.</p>
+        </section>
+
+        <section class="settings-section">
           <h3 data-i18n="clockFace">Clock face</h3>
           <div class="choice-grid clock-faces" id="flip-style-options">
             <button type="button" data-flip-style="standard"><i class="clock-face-preview split"></i><span data-i18n="splitCards">Split cards</span></button>
@@ -124,8 +138,8 @@
         </section>
 
         <section class="settings-section settings-list">
-          <label class="switch-row"><span><b data-i18n="hourFormat">24-hour format</b><small data-i18n="hourFormatHelp">Use 13:45 instead of 1:45 PM</small></span><input id="setting-24-hour" type="checkbox"><i></i></label>
           <label class="switch-row"><span><b data-i18n="showSeconds">Show seconds</b><small data-i18n="showSecondsHelp">Show animated seconds in the clock corner</small></span><input id="setting-seconds" type="checkbox"><i></i></label>
+          <label class="switch-row"><span><b data-i18n="blinkSeparator">Blinking separator</b><small data-i18n="blinkSeparatorHelp">Blink only when seconds are hidden; stay steady when seconds are shown</small></span><input id="setting-blink-separator" type="checkbox"><i></i></label>
           <label class="switch-row"><span><b data-i18n="showDate">Show date &amp; day</b><small data-i18n="showDateHelp">Display the date under the clock</small></span><input id="setting-date" type="checkbox"><i></i></label>
         </section>
 
@@ -149,6 +163,31 @@
         </section>
 
         <section class="settings-section">
+          <h3 data-i18n="sleepSchedule">Sleep schedule</h3>
+          <label class="switch-row"><span><b data-i18n="sleepEnabled">Enable sleep mode</b><small data-i18n="sleepEnabledHelp">Show only a dimmed clock during the selected hours</small></span><input id="setting-sleep-enabled" type="checkbox"><i></i></label>
+          <div class="sleep-fields" id="sleep-fields">
+            <div class="time-grid">
+              <label><span class="field-label" data-i18n="sleepStart">Starts</span><input class="text-input time-24h" id="setting-sleep-start" type="text" value="23:00" placeholder="23:00" inputmode="numeric" maxlength="5" pattern="[0-2][0-9]:[0-5][0-9]" autocomplete="off" spellcheck="false" required></label>
+              <label><span class="field-label" data-i18n="sleepEnd">Ends</span><input class="text-input time-24h" id="setting-sleep-end" type="text" value="07:00" placeholder="07:00" inputmode="numeric" maxlength="5" pattern="[0-2][0-9]:[0-5][0-9]" autocomplete="off" spellcheck="false" required></label>
+            </div>
+            <span class="field-label" data-i18n="sleepDays">Active days</span>
+            <div class="choice-grid sleep-days" id="sleep-days">
+              <button type="button" data-sleep-day="1" data-i18n="mondayShort">M</button>
+              <button type="button" data-sleep-day="2" data-i18n="tuesdayShort">T</button>
+              <button type="button" data-sleep-day="3" data-i18n="wednesdayShort">W</button>
+              <button type="button" data-sleep-day="4" data-i18n="thursdayShort">T</button>
+              <button type="button" data-sleep-day="5" data-i18n="fridayShort">F</button>
+              <button type="button" data-sleep-day="6" data-i18n="saturdayShort">S</button>
+              <button type="button" data-sleep-day="0" data-i18n="sundayShort">S</button>
+            </div>
+            <label class="range-row"><span><span data-i18n="sleepBrightness">Sleep brightness</span> <output id="sleep-dim-output">20%</output></span><input id="setting-sleep-dim" type="range" min="5" max="100" step="5" value="20"></label>
+            <label class="switch-row"><span><b data-i18n="sleepSeconds">Seconds during sleep</b><small data-i18n="sleepSecondsHelp">Keep compact seconds visible in the clock corner</small></span><input id="setting-sleep-seconds" type="checkbox"><i></i></label>
+            <p class="field-help" data-i18n="sleepHelp">The schedule follows the dashboard timezone. Tap the sleeping clock once to reveal controls temporarily.</p>
+            <button class="secondary-button wide-button" id="preview-sleep" type="button" data-i18n="previewSleep">Preview for 15 seconds</button>
+          </div>
+        </section>
+
+        <section class="settings-section">
           <h3 data-i18n="weatherLocation">Weather location</h3>
           <label class="field-label" for="weather-mode" data-i18n="locationSource">Location source</label>
           <select class="text-input" id="weather-mode">
@@ -157,7 +196,7 @@
             <option value="device" data-i18n="tabletLocation">This tablet's location</option>
           </select>
           <label class="field-label city-field" id="city-field" for="weather-city" data-i18n="city">City</label>
-          <input class="text-input city-field" id="weather-city" type="text" maxlength="100" placeholder="e.g. Bucharest, Romania" data-i18n-placeholder="cityPlaceholder" autocomplete="off">
+          <input class="text-input city-field" id="weather-city" type="text" maxlength="100" placeholder="e.g. Timisoara, Romania" data-i18n-placeholder="cityPlaceholder" autocomplete="off">
           <p class="field-help" id="location-help" data-i18n="locationHelp">Device location needs browser location permission and usually HTTPS on a LAN.</p>
         </section>
 
@@ -178,6 +217,6 @@
       </footer>
     </aside>
 
-    <script src="/app.js?v=2.4.1" defer></script>
+    <script src="/app.js?v=2.7.1" defer></script>
   </body>
 </html>

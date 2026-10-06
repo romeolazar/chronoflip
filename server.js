@@ -9,30 +9,40 @@ const PUBLIC_DIR = path.join(__dirname, 'public');
 const WEATHER_TTL_MS = 10 * 60 * 1000;
 const CALENDAR_TTL_MS = 5 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 12_000;
+const DEFAULT_CALENDAR_URL = process.env.CALENDAR_ICS_URL || 'http://better-f1-calendar.vercel.app/api/calendar.ics';
 const CALENDAR_ICS_FILE = process.env.CALENDAR_ICS_FILE || '/data/calendar/calendar.ics';
+const SETTINGS_FILE = process.env.SETTINGS_FILE || '/data/settings/settings.json';
 const hasCalendarFile = Boolean(CALENDAR_ICS_FILE && fs.existsSync(CALENDAR_ICS_FILE));
 
 const config = Object.freeze({
-  locationName: cleanText(process.env.LOCATION_NAME || 'Bucharest', 80),
-  latitude: clampNumber(process.env.LATITUDE, -90, 90, 44.4268),
-  longitude: clampNumber(process.env.LONGITUDE, -180, 180, 26.1025),
+  locationName: cleanText(process.env.LOCATION_NAME || 'Timisoara, Romania', 80),
+  latitude: clampNumber(process.env.LATITUDE, -90, 90, 45.7489),
+  longitude: clampNumber(process.env.LONGITUDE, -180, 180, 21.2087),
   temperatureUnit: process.env.TEMPERATURE_UNIT === 'fahrenheit' ? 'fahrenheit' : 'celsius',
   windSpeedUnit: ['kmh', 'mph', 'ms', 'kn'].includes(process.env.WIND_SPEED_UNIT)
     ? process.env.WIND_SPEED_UNIT
     : 'kmh',
-  timeFormat: process.env.TIME_FORMAT === '12' ? '12' : '24',
+  timeFormat: '24',
   showSeconds: process.env.SHOW_SECONDS === 'true',
+  blinkSeparator: process.env.BLINK_SEPARATOR !== 'false',
   clockPosition: ['center', 'top', 'fill'].includes(process.env.CLOCK_POSITION) ? process.env.CLOCK_POSITION : 'center',
   locale: cleanText(process.env.LOCALE || 'en-GB', 35),
   timeZone: normalizeTimeZone(process.env.TIME_ZONE),
   forecastDays: clampInt(process.env.FORECAST_DAYS, 3, 7, 5),
-  calendarEnabled: hasCalendarFile || Boolean(process.env.CALENDAR_ICS_URL),
-  calendarSource: hasCalendarFile ? 'file' : process.env.CALENDAR_ICS_URL ? 'url' : null,
+  calendarEnabled: hasCalendarFile || Boolean(DEFAULT_CALENDAR_URL),
+  calendarSource: hasCalendarFile ? 'file' : DEFAULT_CALENDAR_URL ? 'url' : null,
+  calendarUrl: DEFAULT_CALENDAR_URL,
   calendarDays: clampInt(process.env.CALENDAR_DAYS, 1, 31, 7),
   calendarMaxEvents: clampInt(process.env.CALENDAR_MAX_EVENTS, 1, 8, 4),
   dimStart: clampInt(process.env.DIM_START, 0, 23, 22),
   dimEnd: clampInt(process.env.DIM_END, 0, 23, 7),
   dimLevel: clampNumber(process.env.DIM_LEVEL, 0.25, 1, 0.72),
+  sleepEnabled: process.env.SLEEP_ENABLED === 'true',
+  sleepStart: normalizeClockTime(process.env.SLEEP_START, '23:00'),
+  sleepEnd: normalizeClockTime(process.env.SLEEP_END, '07:00'),
+  sleepDays: normalizeSleepDays(process.env.SLEEP_DAYS),
+  sleepDimLevel: clampNumber(process.env.SLEEP_DIM_LEVEL, 0.05, 1, 0.2),
+  sleepShowSeconds: process.env.SLEEP_SHOW_SECONDS === 'true',
   burnInShift: process.env.BURN_IN_SHIFT !== 'false'
 });
 
@@ -52,6 +62,33 @@ function cleanText(value, maxLength) {
   return String(value).replace(/[\u0000-\u001f\u007f]/g, '').slice(0, maxLength);
 }
 
+function normalizeCalendarUrl(value) {
+  const candidate = cleanText(value || '', 2000).trim();
+  if (!candidate) return '';
+  let parsed;
+  try {
+    parsed = new URL(candidate);
+  } catch {
+    throw new Error('Calendar URL is invalid');
+  }
+  if (!['http:', 'https:'].includes(parsed.protocol) || parsed.username || parsed.password) {
+    throw new Error('Calendar URL must be a public HTTP or HTTPS address without credentials');
+  }
+  return parsed.href;
+}
+
+function normalizeClockTime(value, fallback) {
+  const candidate = cleanText(value || fallback, 5);
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(candidate) ? candidate : fallback;
+}
+
+function normalizeSleepDays(value) {
+  if (value === undefined || value === null || value === '') return [0, 1, 2, 3, 4, 5, 6];
+  return [...new Set(String(value).split(',')
+    .map((day) => Number(day.trim()))
+    .filter((day) => Number.isInteger(day) && day >= 0 && day <= 6))];
+}
+
 function normalizeTimeZone(value) {
   const candidate = cleanText(value || 'Europe/Bucharest', 80);
   try {
@@ -60,6 +97,146 @@ function normalizeTimeZone(value) {
   } catch {
     return 'UTC';
   }
+}
+
+const defaultDashboardSettings = Object.freeze({
+  displayStyle: 'ambient',
+  language: String(config.locale).toLowerCase().startsWith('ro') ? 'ro' : 'en',
+  theme: 'dark',
+  fontFamily: 'roboto',
+  flipStyle: 'standard',
+  clockStyleVersion: 2,
+  timeFormat: config.timeFormat,
+  showSeconds: config.showSeconds,
+  blinkSeparator: config.blinkSeparator,
+  showDate: true,
+  layout: 'auto',
+  clockPosition: config.clockPosition,
+  clockSize: 100,
+  cornerRadius: 18,
+  sleepEnabled: config.sleepEnabled,
+  sleepStart: config.sleepStart,
+  sleepEnd: config.sleepEnd,
+  sleepDays: config.sleepDays,
+  sleepDimLevel: Math.round(config.sleepDimLevel * 100),
+  sleepShowSeconds: config.sleepShowSeconds,
+  weatherMode: 'city',
+  weatherCity: config.locationName,
+  deviceLocation: null,
+  calendarUrl: config.calendarUrl
+});
+
+function normalizeDashboardSettings(raw = {}) {
+  const source = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+  const settings = { ...defaultDashboardSettings, ...source };
+  settings.displayStyle = ['ambient', 'classic-weather'].includes(settings.displayStyle) ? settings.displayStyle : defaultDashboardSettings.displayStyle;
+  settings.language = ['en', 'ro'].includes(settings.language) ? settings.language : defaultDashboardSettings.language;
+  settings.theme = ['dark', 'light', 'midnight', 'sand'].includes(settings.theme) ? settings.theme : defaultDashboardSettings.theme;
+  if (settings.fontFamily === 'serif') settings.fontFamily = 'roboto';
+  settings.fontFamily = ['modern', 'condensed', 'roboto', 'mono'].includes(settings.fontFamily) ? settings.fontFamily : defaultDashboardSettings.fontFamily;
+  settings.flipStyle = ['simple', 'standard', 'professional', 'paired-dark', 'paired-light'].includes(settings.flipStyle) ? settings.flipStyle : defaultDashboardSettings.flipStyle;
+  settings.clockStyleVersion = 2;
+  settings.timeFormat = '24';
+  settings.showSeconds = Boolean(settings.showSeconds);
+  settings.blinkSeparator = settings.blinkSeparator !== false;
+  settings.showDate = settings.showDate !== false;
+  settings.layout = ['auto', 'horizontal', 'vertical'].includes(settings.layout) ? settings.layout : defaultDashboardSettings.layout;
+  settings.clockPosition = ['center', 'top', 'fill'].includes(settings.clockPosition) ? settings.clockPosition : defaultDashboardSettings.clockPosition;
+  settings.clockSize = clampInt(settings.clockSize, 70, 100, defaultDashboardSettings.clockSize);
+  settings.cornerRadius = clampInt(settings.cornerRadius, 0, 36, defaultDashboardSettings.cornerRadius);
+  settings.sleepEnabled = Boolean(settings.sleepEnabled);
+  settings.sleepStart = normalizeClockTime(settings.sleepStart, defaultDashboardSettings.sleepStart);
+  settings.sleepEnd = normalizeClockTime(settings.sleepEnd, defaultDashboardSettings.sleepEnd);
+  settings.sleepDays = Array.isArray(settings.sleepDays)
+    ? [...new Set(settings.sleepDays.map(Number).filter((day) => Number.isInteger(day) && day >= 0 && day <= 6))]
+    : [...defaultDashboardSettings.sleepDays];
+  settings.sleepDimLevel = clampInt(settings.sleepDimLevel, 5, 100, defaultDashboardSettings.sleepDimLevel);
+  settings.sleepShowSeconds = Boolean(settings.sleepShowSeconds);
+  settings.weatherMode = ['server', 'city', 'device'].includes(settings.weatherMode) ? settings.weatherMode : defaultDashboardSettings.weatherMode;
+  settings.weatherCity = cleanText(settings.weatherCity || '', 100).trim();
+  settings.calendarUrl = normalizeCalendarUrl(settings.calendarUrl);
+  const deviceLocation = settings.deviceLocation;
+  settings.deviceLocation = deviceLocation && Number.isFinite(Number(deviceLocation.latitude)) && Number.isFinite(Number(deviceLocation.longitude))
+    ? {
+        latitude: clampNumber(deviceLocation.latitude, -90, 90, config.latitude),
+        longitude: clampNumber(deviceLocation.longitude, -180, 180, config.longitude)
+      }
+    : null;
+  return {
+    displayStyle: settings.displayStyle,
+    language: settings.language,
+    theme: settings.theme,
+    fontFamily: settings.fontFamily,
+    flipStyle: settings.flipStyle,
+    clockStyleVersion: settings.clockStyleVersion,
+    timeFormat: settings.timeFormat,
+    showSeconds: settings.showSeconds,
+    blinkSeparator: settings.blinkSeparator,
+    showDate: settings.showDate,
+    layout: settings.layout,
+    clockPosition: settings.clockPosition,
+    clockSize: settings.clockSize,
+    cornerRadius: settings.cornerRadius,
+    sleepEnabled: settings.sleepEnabled,
+    sleepStart: settings.sleepStart,
+    sleepEnd: settings.sleepEnd,
+    sleepDays: settings.sleepDays,
+    sleepDimLevel: settings.sleepDimLevel,
+    sleepShowSeconds: settings.sleepShowSeconds,
+    weatherMode: settings.weatherMode,
+    weatherCity: settings.weatherCity,
+    deviceLocation: settings.deviceLocation,
+    calendarUrl: settings.calendarUrl
+  };
+}
+
+function loadDashboardSettings() {
+  try {
+    if (!fs.existsSync(SETTINGS_FILE)) return normalizeDashboardSettings();
+    return normalizeDashboardSettings(JSON.parse(fs.readFileSync(SETTINGS_FILE, 'utf8')));
+  } catch (error) {
+    console.warn(`Could not load shared settings: ${error.message}`);
+    return normalizeDashboardSettings();
+  }
+}
+
+function persistDashboardSettings(settings) {
+  const directory = path.dirname(SETTINGS_FILE);
+  const temporaryFile = `${SETTINGS_FILE}.tmp`;
+  fs.mkdirSync(directory, { recursive: true });
+  fs.writeFileSync(temporaryFile, `${JSON.stringify(settings, null, 2)}\n`, { mode: 0o600 });
+  fs.renameSync(temporaryFile, SETTINGS_FILE);
+}
+
+function readJsonBody(req, maxBytes = 32_768) {
+  return new Promise((resolve, reject) => {
+    let body = '';
+    req.setEncoding('utf8');
+    req.on('data', (chunk) => {
+      body += chunk;
+      if (Buffer.byteLength(body) > maxBytes) {
+        reject(new Error('Settings payload is too large'));
+        req.destroy();
+      }
+    });
+    req.on('end', () => {
+      if (!body) return reject(new Error('Settings payload is empty'));
+      try {
+        return resolve(JSON.parse(body));
+      } catch {
+        return reject(new Error('Settings payload is invalid JSON'));
+      }
+    });
+    req.on('error', reject);
+  });
+}
+
+let dashboardSettings = loadDashboardSettings();
+let settingsRevision = Date.now();
+try {
+  persistDashboardSettings(dashboardSettings);
+} catch (error) {
+  console.warn(`Could not initialize shared settings file: ${error.message}`);
 }
 
 function sendJson(res, status, body, cacheControl = 'no-store') {
@@ -351,7 +528,7 @@ async function getCalendar(publicUrl = '') {
   if (!overrideUrl && !config.calendarEnabled) return { enabled: false, events: [] };
 
   const source = overrideUrl ? 'public-url' : hasCalendarFile ? 'file' : 'url';
-  const cacheKey = source === 'file' ? `file:${CALENDAR_ICS_FILE}` : `url:${overrideUrl || process.env.CALENDAR_ICS_URL}`;
+  const cacheKey = source === 'file' ? `file:${CALENDAR_ICS_FILE}` : `url:${overrideUrl || config.calendarUrl}`;
   const cached = calendarCache.get(cacheKey);
   if (cached?.data && Date.now() < cached.expires) return cached.data;
 
@@ -363,7 +540,7 @@ async function getCalendar(publicUrl = '') {
     if (stats.size > 5_000_000) throw new Error('Calendar is too large');
     text = await fs.promises.readFile(CALENDAR_ICS_FILE, 'utf8');
   } else {
-    text = await fetchPublicCalendar(process.env.CALENDAR_ICS_URL);
+    text = await fetchPublicCalendar(config.calendarUrl);
   }
   const data = {
     enabled: true,
@@ -379,8 +556,10 @@ const mimeTypes = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.png': 'image/png',
+  '.woff2': 'font/woff2',
   '.ico': 'image/x-icon'
 };
 
@@ -410,15 +589,30 @@ function serveStatic(req, res, pathname) {
 
 const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-  if (req.method !== 'GET' && req.method !== 'HEAD') {
-    res.writeHead(405, { Allow: 'GET, HEAD' });
+  const isSettingsWrite = url.pathname === '/api/settings' && req.method === 'PUT';
+  if (req.method !== 'GET' && req.method !== 'HEAD' && !isSettingsWrite) {
+    res.writeHead(405, { Allow: url.pathname === '/api/settings' ? 'GET, HEAD, PUT' : 'GET, HEAD' });
     res.end();
     return;
   }
 
   try {
     if (url.pathname === '/health') return sendJson(res, 200, { ok: true });
-    if (url.pathname === '/api/config') return sendJson(res, 200, config, 'public, max-age=300');
+    if (url.pathname === '/api/config') {
+      return sendJson(res, 200, { ...config, settings: dashboardSettings, settingsRevision });
+    }
+    if (url.pathname === '/api/settings' && req.method === 'PUT') {
+      const nextSettings = normalizeDashboardSettings(await readJsonBody(req));
+      persistDashboardSettings(nextSettings);
+      dashboardSettings = nextSettings;
+      settingsRevision = Math.max(Date.now(), settingsRevision + 1);
+      weatherCache.clear();
+      calendarCache.clear();
+      return sendJson(res, 200, { settings: dashboardSettings, revision: settingsRevision });
+    }
+    if (url.pathname === '/api/settings') {
+      return sendJson(res, 200, { settings: dashboardSettings, revision: settingsRevision });
+    }
     if (url.pathname === '/api/weather') {
       const city = url.searchParams.get('city') || '';
       const latitude = url.searchParams.has('latitude') ? Number(url.searchParams.get('latitude')) : NaN;

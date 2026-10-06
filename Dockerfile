@@ -3,6 +3,8 @@ FROM node:22-alpine
 ENV NODE_ENV=production
 WORKDIR /app
 
+RUN mkdir -p /data/settings && chown -R node:node /data/settings
+
 COPY package.json server.js ./
 COPY public ./public
 
