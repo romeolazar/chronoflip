@@ -84,8 +84,8 @@ The settings panel includes the complete display set inspired by A Flip Clock:
 - Auto, horizontal, and vertical clock layouts
 - Clock size and corner radius sliders
 - Center, Top, or Fill Space clock position; Fill Space uses the full assigned width and height
-- Shared sleep schedule with active days, clock-only display, brightness, and compact seconds controls
-- Docker-default, city-name, or tablet-location weather
+- Shared sleep schedule with active days, clock-only display, brightness, compact seconds controls, and a local quick button that enters or exits sleep immediately
+- Docker-default, city-name, or device-location weather with a resolved place name
 - Public iCal/ICS URL
 - English and Romanian interface, weather, date, forecast, and calendar labels
 - Reset and fullscreen kiosk controls
@@ -96,7 +96,7 @@ Fill Space expands the hour and minute cards across all available room above the
 
 Choosing **Română** translates the controls, weather descriptions, dates, weekday names, forecast, calendar labels, and common status messages on every connected display without restarting the container.
 
-The city option is resolved by the container through Open-Meteo. Tablet location uses the browser Geolocation API; on a LAN address, browsers commonly require HTTPS before they expose precise location. City mode is the reliable HTTP fallback.
+The city option is resolved by the container through Open-Meteo. Device Location uses the browser Geolocation API; on a LAN address, browsers commonly require HTTPS before they expose precise location. The resulting coordinates are reverse-geocoded through OpenStreetMap Nominatim and cached by the container. City mode is the reliable HTTP fallback.
 
 ### Sleep schedule
 
@@ -163,7 +163,7 @@ The lightweight ICS reader handles regular events plus common daily, weekly, mon
 
 ## Data source and privacy
 
-Weather data comes from [Open-Meteo](https://open-meteo.com/). No API key is needed for normal non-commercial use. Your configured city or coordinates are sent to Open-Meteo by the container. Public ICS feeds are also fetched by the container; their URL is part of the shared client configuration so every display can show and edit the same value.
+Weather data comes from [Open-Meteo](https://open-meteo.com/). Device-location names come from [OpenStreetMap contributors through Nominatim](https://www.openstreetmap.org/copyright); lookups are user-triggered, rate-limited, and cached. No API key is needed for normal non-commercial use. Your configured city or coordinates are sent to these services by the container. Public ICS feeds are also fetched by the container; their URL is part of the shared client configuration so every display can show and edit the same value.
 
 ## Open source and design references
 

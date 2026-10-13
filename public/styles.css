@@ -516,6 +516,7 @@ body { touch-action: manipulation; }
 .icon-button:focus-visible,
 .close-button:hover,
 .close-button:focus-visible { background: color-mix(in srgb, var(--white), transparent 90%); color: var(--white); }
+.icon-button.active { background: color-mix(in srgb, var(--accent), transparent 82%); color: var(--accent); }
 .icon-button svg { width: 100%; height: 100%; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .moon-icon { display: none; }
 html[data-theme="light"] .moon-icon,

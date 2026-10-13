@@ -7,6 +7,7 @@ const net = require('node:net');
 const PORT = clampInt(process.env.PORT, 1, 65535, 8080);
 const PUBLIC_DIR = path.join(__dirname, 'public');
 const WEATHER_TTL_MS = 10 * 60 * 1000;
+const LOCATION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const CALENDAR_TTL_MS = 5 * 60 * 1000;
 const REQUEST_TIMEOUT_MS = 12_000;
 const DEFAULT_CALENDAR_URL = process.env.CALENDAR_ICS_URL || 'http://better-f1-calendar.vercel.app/api/calendar.ics';
@@ -47,7 +48,9 @@ const config = Object.freeze({
 });
 
 const weatherCache = new Map();
+const locationCache = new Map();
 const calendarCache = new Map();
+let lastLocationLookupAt = 0;
 
 function clampNumber(value, min, max, fallback) {
   const parsed = Number(value);
@@ -159,7 +162,8 @@ function normalizeDashboardSettings(raw = {}) {
   settings.deviceLocation = deviceLocation && Number.isFinite(Number(deviceLocation.latitude)) && Number.isFinite(Number(deviceLocation.longitude))
     ? {
         latitude: clampNumber(deviceLocation.latitude, -90, 90, config.latitude),
-        longitude: clampNumber(deviceLocation.longitude, -180, 180, config.longitude)
+        longitude: clampNumber(deviceLocation.longitude, -180, 180, config.longitude),
+        name: cleanText(deviceLocation.name || '', 80).trim()
       }
     : null;
   return {
@@ -250,10 +254,47 @@ function sendJson(res, status, body, cacheControl = 'no-store') {
   res.end(payload);
 }
 
-async function fetchJson(url) {
-  const response = await fetch(url, { signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
+async function fetchJson(url, options = {}) {
+  const response = await fetch(url, { ...options, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) });
   if (!response.ok) throw new Error(`Upstream returned ${response.status}`);
   return response.json();
+}
+
+async function reverseGeocodeLocation(latitude, longitude, language = 'en') {
+  const normalizedLanguage = ['en', 'ro'].includes(language) ? language : 'en';
+  const cacheKey = `${latitude.toFixed(3)},${longitude.toFixed(3)}:${normalizedLanguage}`;
+  const cached = locationCache.get(cacheKey);
+  if (cached && Date.now() < cached.expires) return cached.name;
+
+  const waitMs = Math.max(0, 1100 - (Date.now() - lastLocationLookupAt));
+  if (waitMs) await new Promise((resolve) => setTimeout(resolve, waitMs));
+  lastLocationLookupAt = Date.now();
+
+  const url = new URL('https://nominatim.openstreetmap.org/reverse');
+  url.search = new URLSearchParams({
+    format: 'jsonv2',
+    lat: String(latitude),
+    lon: String(longitude),
+    zoom: '10',
+    addressdetails: '1',
+    'accept-language': normalizedLanguage
+  });
+  const data = await fetchJson(url, {
+    headers: {
+      Accept: 'application/json',
+      'User-Agent': 'ChronoFlip/2.8.2 (https://github.com/romeolazar/chronoflip)'
+    }
+  });
+  const address = data.address || {};
+  const locality = address.city || address.town || address.village || address.municipality || address.suburb || address.county || data.name;
+  const region = address.state || address.county;
+  const name = [locality, region, address.country]
+    .filter(Boolean)
+    .filter((value, index, values) => values.indexOf(value) === index)
+    .join(', ') || `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+  const cleanedName = cleanText(name, 80);
+  locationCache.set(cacheKey, { name: cleanedName, expires: Date.now() + LOCATION_TTL_MS });
+  return cleanedName;
 }
 
 async function geocodeCity(city, language = config.locale.split('-')[0] || 'en') {
@@ -285,10 +326,20 @@ async function getWeather(options = {}) {
   };
   if (options.city) location = await geocodeCity(options.city, options.language);
   if (Number.isFinite(options.latitude) && Number.isFinite(options.longitude)) {
+    const latitude = clampNumber(options.latitude, -90, 90, config.latitude);
+    const longitude = clampNumber(options.longitude, -180, 180, config.longitude);
+    let name = cleanText(options.name || '', 80).trim();
+    if (!name) {
+      try {
+        name = await reverseGeocodeLocation(latitude, longitude, options.language);
+      } catch {
+        name = `${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+      }
+    }
     location = {
-      latitude: clampNumber(options.latitude, -90, 90, config.latitude),
-      longitude: clampNumber(options.longitude, -180, 180, config.longitude),
-      name: cleanText(options.name || 'Current location', 80)
+      latitude,
+      longitude,
+      name
     };
   }
   const cacheKey = `${location.latitude.toFixed(4)},${location.longitude.toFixed(4)}:${location.name}`;
@@ -620,6 +671,19 @@ const server = http.createServer(async (req, res) => {
       const name = url.searchParams.get('name') || '';
       const language = cleanText(url.searchParams.get('language') || '', 5).toLowerCase();
       return sendJson(res, 200, await getWeather({ city, latitude, longitude, name, language }), 'public, max-age=300');
+    }
+    if (url.pathname === '/api/location') {
+      const latitude = Number(url.searchParams.get('latitude'));
+      const longitude = Number(url.searchParams.get('longitude'));
+      const language = cleanText(url.searchParams.get('language') || '', 5).toLowerCase();
+      if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) throw new Error('Valid coordinates are required');
+      const normalizedLatitude = clampNumber(latitude, -90, 90, config.latitude);
+      const normalizedLongitude = clampNumber(longitude, -180, 180, config.longitude);
+      return sendJson(res, 200, {
+        latitude: normalizedLatitude,
+        longitude: normalizedLongitude,
+        name: await reverseGeocodeLocation(normalizedLatitude, normalizedLongitude, language)
+      });
     }
     if (url.pathname === '/api/calendar') {
       return sendJson(res, 200, await getCalendar(url.searchParams.get('url') || ''), 'public, max-age=180');

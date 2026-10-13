@@ -11,6 +11,8 @@ const state = {
   lastClockSecond: -1,
   lastDateKey: '',
   sleepActive: false,
+  sleepManualActive: false,
+  sleepScheduleBypass: false,
   sleepAwakeUntil: 0,
   sleepPreviewUntil: 0,
   sleepWakeTimer: null,
@@ -35,6 +37,7 @@ const elements = {
   offline: document.querySelector('#offline-badge'),
   fullscreen: document.querySelector('#fullscreen-button'),
   themeToggle: document.querySelector('#theme-toggle'),
+  sleepToggle: document.querySelector('#sleep-toggle'),
   settingsButton: document.querySelector('#settings-button'),
   settingsPanel: document.querySelector('#settings-panel'),
   settingsBackdrop: document.querySelector('#settings-backdrop'),
@@ -77,15 +80,15 @@ const messages = {
     sleepSchedule: 'Sleep schedule', sleepEnabled: 'Enable sleep mode', sleepEnabledHelp: 'Show only a dimmed clock during the selected hours', sleepStart: 'Starts', sleepEnd: 'Ends', sleepDays: 'Active days',
     sleepBrightness: 'Sleep brightness', sleepSeconds: 'Seconds during sleep', sleepSecondsHelp: 'Keep compact seconds visible in the clock corner', sleepHelp: 'The schedule follows the dashboard timezone. Tap the sleeping clock once to reveal controls temporarily.', previewSleep: 'Preview for 15 seconds',
     mondayShort: 'M', tuesdayShort: 'T', wednesdayShort: 'W', thursdayShort: 'T', fridayShort: 'F', saturdayShort: 'S', sundayShort: 'S', weatherLocation: 'Weather location', locationSource: 'Location source',
-    dockerDefaults: 'Docker defaults', cityName: 'City name', tabletLocation: "This tablet's location", city: 'City', cityPlaceholder: 'e.g. Timisoara, Romania',
-    locationHelp: 'Device location needs browser location permission and usually HTTPS on a LAN.', calendar: 'Calendar', publicCalendarUrl: 'Public iCal / ICS URL',
+    dockerDefaults: 'Docker defaults', cityName: 'City name', deviceLocation: 'Device location', city: 'City', cityPlaceholder: 'e.g. Timisoara, Romania',
+    locationHelp: 'Device location needs browser permission and usually HTTPS on a LAN. Location names © OpenStreetMap contributors.', calendar: 'Calendar', publicCalendarUrl: 'Public iCal / ICS URL',
     calendarHelp: 'Leave blank to use the Docker-mounted calendar file or configured URL.', reset: 'Reset', enterKiosk: 'Enter kiosk', apply: 'Apply', upNext: 'UP NEXT',
     timeAndDate: 'Time and date', currentWeather: 'Current weather', fiveDayForecast: 'Five day forecast', upcomingEvents: 'Upcoming calendar events', displayControls: 'Display controls',
-    switchTheme: 'Switch light or dark mode', lightDarkMode: 'Light / dark mode', openSettings: 'Open settings', closeSettings: 'Close settings', enterFullscreen: 'Enter fullscreen',
+    switchTheme: 'Switch light or dark mode', lightDarkMode: 'Light / dark mode', enableSleep: 'Enter sleep mode now', disableSleep: 'Exit sleep mode', openSettings: 'Open settings', closeSettings: 'Close settings', enterFullscreen: 'Enter fullscreen',
     fullscreenKiosk: 'Fullscreen / kiosk mode', dashboardSettings: 'Dashboard settings', offline: 'OFFLINE · SHOWING LAST UPDATE', loadingWeather: 'Loading weather', updating: 'Updating…',
     currentConditions: 'Current conditions', feels: 'Feels', humidity: 'Humidity', wind: 'Wind', high: 'High', low: 'Low', today: 'Today', tomorrow: 'Tomorrow', allDay: 'All day',
     nextSevenDays: 'Next 7 days', nothingScheduled: 'Nothing scheduled', currentLocation: 'Current location', settingsSaved: 'Saved on the server and synchronized to all displays.', loadingSettings: 'Saving shared settings…',
-    defaultsRestored: 'Defaults restored.', requestingLocation: 'Requesting tablet location…', calendarUrlError: 'Calendar URL must begin with https:// or http://', cityRequired: 'Enter a city name for weather.', sleepTimeError: 'Choose a valid start and end time.',
+    defaultsRestored: 'Defaults restored.', requestingLocation: 'Requesting device location…', calendarUrlError: 'Calendar URL must begin with https:// or http://', cityRequired: 'Enter a city name for weather.', sleepTimeError: 'Choose a valid start and end time.',
     fullscreenUnavailable: 'Fullscreen is not supported by this browser. Use its kiosk/fullscreen option instead.', locationUnavailable: 'This browser does not provide device location',
     locationDenied: 'Location permission was unavailable. Use a city name or HTTPS.',
     weatherClear: 'Clear', weatherMostlyClear: 'Mostly clear', weatherPartlyCloudy: 'Partly cloudy', weatherOvercast: 'Overcast', weatherFoggy: 'Foggy', weatherIcyFog: 'Icy fog',
@@ -107,15 +110,15 @@ const messages = {
     sleepSchedule: 'Program de somn', sleepEnabled: 'Activează modul de somn', sleepEnabledHelp: 'Afișează numai ceasul estompat în orele selectate', sleepStart: 'Începe', sleepEnd: 'Se termină', sleepDays: 'Zile active',
     sleepBrightness: 'Luminozitate în somn', sleepSeconds: 'Secunde în timpul somnului', sleepSecondsHelp: 'Păstrează secundele compacte în colțul ceasului', sleepHelp: 'Programul urmează fusul orar al tabloului. Atinge o dată ceasul în repaus pentru a afișa temporar comenzile.', previewSleep: 'Previzualizare 15 secunde',
     mondayShort: 'L', tuesdayShort: 'M', wednesdayShort: 'M', thursdayShort: 'J', fridayShort: 'V', saturdayShort: 'S', sundayShort: 'D', weatherLocation: 'Locația meteo', locationSource: 'Sursa locației',
-    dockerDefaults: 'Setările Docker', cityName: 'Numele orașului', tabletLocation: 'Locația acestei tablete', city: 'Oraș', cityPlaceholder: 'ex. Timișoara, România',
-    locationHelp: 'Locația dispozitivului necesită permisiunea browserului și, de obicei, HTTPS în rețeaua locală.', calendar: 'Calendar', publicCalendarUrl: 'Adresă publică iCal / ICS',
+    dockerDefaults: 'Setările Docker', cityName: 'Numele orașului', deviceLocation: 'Locația dispozitivului', city: 'Oraș', cityPlaceholder: 'ex. Timișoara, România',
+    locationHelp: 'Locația dispozitivului necesită permisiunea browserului și, de obicei, HTTPS în rețeaua locală. Denumirile locațiilor © colaboratorii OpenStreetMap.', calendar: 'Calendar', publicCalendarUrl: 'Adresă publică iCal / ICS',
     calendarHelp: 'Lasă necompletat pentru fișierul calendar montat în Docker sau adresa configurată.', reset: 'Resetează', enterKiosk: 'Mod chioșc', apply: 'Aplică', upNext: 'URMEAZĂ',
     timeAndDate: 'Ora și data', currentWeather: 'Vremea actuală', fiveDayForecast: 'Prognoza pe cinci zile', upcomingEvents: 'Evenimente viitoare', displayControls: 'Comenzi afișaj',
-    switchTheme: 'Comută modul luminos sau întunecat', lightDarkMode: 'Mod luminos / întunecat', openSettings: 'Deschide setările', closeSettings: 'Închide setările', enterFullscreen: 'Intră în ecran complet',
+    switchTheme: 'Comută modul luminos sau întunecat', lightDarkMode: 'Mod luminos / întunecat', enableSleep: 'Activează acum modul de somn', disableSleep: 'Ieși din modul de somn', openSettings: 'Deschide setările', closeSettings: 'Închide setările', enterFullscreen: 'Intră în ecran complet',
     fullscreenKiosk: 'Ecran complet / mod chioșc', dashboardSettings: 'Setările tabloului', offline: 'OFFLINE · SE AFIȘEAZĂ ULTIMA ACTUALIZARE', loadingWeather: 'Se încarcă vremea', updating: 'Se actualizează…',
     currentConditions: 'Condiții actuale', feels: 'Resimțită', humidity: 'Umiditate', wind: 'Vânt', high: 'Max', low: 'Min', today: 'Astăzi', tomorrow: 'Mâine', allDay: 'Toată ziua',
     nextSevenDays: 'Următoarele 7 zile', nothingScheduled: 'Nimic programat', currentLocation: 'Locația curentă', settingsSaved: 'Salvat pe server și sincronizat pe toate ecranele.', loadingSettings: 'Se salvează setările comune…',
-    defaultsRestored: 'Setările implicite au fost restaurate.', requestingLocation: 'Se solicită locația tabletei…', calendarUrlError: 'Adresa calendarului trebuie să înceapă cu https:// sau http://', cityRequired: 'Introdu un oraș pentru vreme.', sleepTimeError: 'Alege ore valide pentru început și sfârșit.',
+    defaultsRestored: 'Setările implicite au fost restaurate.', requestingLocation: 'Se solicită locația dispozitivului…', calendarUrlError: 'Adresa calendarului trebuie să înceapă cu https:// sau http://', cityRequired: 'Introdu un oraș pentru vreme.', sleepTimeError: 'Alege ore valide pentru început și sfârșit.',
     fullscreenUnavailable: 'Ecranul complet nu este acceptat de acest browser. Folosește opțiunea de ecran complet sau chioșc a browserului.', locationUnavailable: 'Acest browser nu oferă locația dispozitivului',
     locationDenied: 'Permisiunea pentru locație nu este disponibilă. Folosește un oraș sau HTTPS.',
     weatherClear: 'Senin', weatherMostlyClear: 'Mai mult senin', weatherPartlyCloudy: 'Parțial noros', weatherOvercast: 'Acoperit', weatherFoggy: 'Ceață', weatherIcyFog: 'Ceață înghețată',
@@ -262,8 +265,14 @@ function normalizeSettings(raw, defaults) {
   settings.calendarUrl = String(settings.calendarUrl || '').slice(0, 2000);
   settings.showSeconds = Boolean(settings.showSeconds);
   settings.showDate = settings.showDate !== false;
-  if (!settings.deviceLocation || !Number.isFinite(settings.deviceLocation.latitude) || !Number.isFinite(settings.deviceLocation.longitude)) {
+  if (!settings.deviceLocation || !Number.isFinite(Number(settings.deviceLocation.latitude)) || !Number.isFinite(Number(settings.deviceLocation.longitude))) {
     settings.deviceLocation = null;
+  } else {
+    settings.deviceLocation = {
+      latitude: Number(settings.deviceLocation.latitude),
+      longitude: Number(settings.deviceLocation.longitude),
+      name: String(settings.deviceLocation.name || '').slice(0, 80)
+    };
   }
   return settings;
 }
@@ -305,6 +314,14 @@ function syncSettingsPanel() {
   elements.weatherCity.value = settings.weatherCity;
   elements.calendarUrl.value = settings.calendarUrl;
   document.querySelectorAll('.city-field').forEach((field) => { field.hidden = settings.weatherMode !== 'city'; });
+  syncSleepToggle();
+}
+
+function syncSleepToggle() {
+  elements.sleepToggle.classList.toggle('active', state.sleepActive);
+  elements.sleepToggle.setAttribute('aria-pressed', String(state.sleepActive));
+  elements.sleepToggle.setAttribute('aria-label', t(state.sleepActive ? 'disableSleep' : 'enableSleep'));
+  elements.sleepToggle.title = t(state.sleepActive ? 'disableSleep' : 'enableSleep');
 }
 
 function effectiveShowSeconds() {
@@ -381,6 +398,11 @@ function timeToMinutes(value) {
   return hours * 60 + minutes;
 }
 
+function formatClockTimeInput(value) {
+  const digits = String(value).replace(/\D/g, '').slice(0, 4);
+  return digits.length > 2 ? `${digits.slice(0, 2)}:${digits.slice(2)}` : digits;
+}
+
 function isWithinSleepSchedule(now) {
   const settings = state.settings;
   if (!settings.sleepEnabled || !settings.sleepDays.length) return false;
@@ -398,7 +420,11 @@ function isWithinSleepSchedule(now) {
 }
 
 function updateSleepMode(now) {
-  const requested = Date.now() < state.sleepPreviewUntil || isWithinSleepSchedule(now);
+  const scheduled = isWithinSleepSchedule(now);
+  if (!scheduled) state.sleepScheduleBypass = false;
+  const requested = state.sleepManualActive
+    || Date.now() < state.sleepPreviewUntil
+    || (scheduled && !state.sleepScheduleBypass);
   const changed = requested !== state.sleepActive;
   state.sleepActive = requested;
   if (!requested) {
@@ -408,6 +434,7 @@ function updateSleepMode(now) {
   elements.dashboard.classList.toggle('sleep-mode', requested);
   elements.dashboard.classList.toggle('sleep-awake', requested && Date.now() < state.sleepAwakeUntil);
   elements.dashboard.style.setProperty('--sleep-dim-level', state.settings.sleepDimLevel / 100);
+  syncSleepToggle();
   if (changed) {
     state.previousTime = '';
     state.lastDateKey = '';
@@ -576,8 +603,8 @@ function weatherApiUrl() {
     return `/api/weather?city=${encodeURIComponent(state.settings.weatherCity.trim())}&language=${encodeURIComponent(state.settings.language)}`;
   }
   if (state.settings.weatherMode === 'device' && state.settings.deviceLocation) {
-    const { latitude, longitude } = state.settings.deviceLocation;
-    return `/api/weather?latitude=${encodeURIComponent(latitude)}&longitude=${encodeURIComponent(longitude)}&name=${encodeURIComponent(t('currentLocation'))}`;
+    const { latitude, longitude, name } = state.settings.deviceLocation;
+    return `/api/weather?latitude=${encodeURIComponent(latitude)}&longitude=${encodeURIComponent(longitude)}&name=${encodeURIComponent(name || '')}&language=${encodeURIComponent(state.settings.language)}`;
   }
   return '/api/weather';
 }
@@ -655,8 +682,8 @@ async function toggleFullscreen() {
   else await enterKiosk();
 }
 
-function requestDeviceLocation() {
-  return new Promise((resolve, reject) => {
+async function requestDeviceLocation() {
+  const coordinates = await new Promise((resolve, reject) => {
     if (!navigator.geolocation) {
       reject(new Error(t('locationUnavailable')));
       return;
@@ -667,6 +694,27 @@ function requestDeviceLocation() {
       { enableHighAccuracy: false, timeout: 12_000, maximumAge: 30 * 60 * 1000 }
     );
   });
+  const fallbackName = `${coordinates.latitude.toFixed(4)}, ${coordinates.longitude.toFixed(4)}`;
+  try {
+    const resolved = await getJson(`/api/location?latitude=${encodeURIComponent(coordinates.latitude)}&longitude=${encodeURIComponent(coordinates.longitude)}&language=${encodeURIComponent(state.settings.language)}`);
+    return { ...coordinates, name: String(resolved.name || fallbackName).slice(0, 80) };
+  } catch {
+    return { ...coordinates, name: fallbackName };
+  }
+}
+
+function toggleSleepMode() {
+  const now = localNow();
+  if (state.sleepActive) {
+    state.sleepManualActive = false;
+    state.sleepPreviewUntil = 0;
+    state.sleepScheduleBypass = isWithinSleepSchedule(now);
+  } else {
+    state.sleepManualActive = true;
+    state.sleepScheduleBypass = false;
+  }
+  state.sleepAwakeUntil = 0;
+  updateClock();
 }
 
 async function saveSettings() {
@@ -761,8 +809,17 @@ function wireControls() {
     syncSettingsPanel();
     updateClock();
   });
-  elements.sleepStart.addEventListener('change', () => { state.settings.sleepStart = elements.sleepStart.value; updateClock(); });
-  elements.sleepEnd.addEventListener('change', () => { state.settings.sleepEnd = elements.sleepEnd.value; updateClock(); });
+  [elements.sleepStart, elements.sleepEnd].forEach((input) => {
+    input.addEventListener('input', () => { input.value = formatClockTimeInput(input.value); });
+    input.addEventListener('change', () => {
+      input.value = formatClockTimeInput(input.value);
+      if (/^([01]\d|2[0-3]):[0-5]\d$/.test(input.value)) {
+        if (input === elements.sleepStart) state.settings.sleepStart = input.value;
+        else state.settings.sleepEnd = input.value;
+        updateClock();
+      }
+    });
+  });
   elements.sleepDim.addEventListener('input', () => {
     state.settings.sleepDimLevel = Number(elements.sleepDim.value);
     elements.sleepDimOutput.textContent = `${state.settings.sleepDimLevel}%`;
@@ -790,6 +847,7 @@ function wireControls() {
       setStatus(localizeApiError(error.message), true);
     }
   });
+  elements.sleepToggle.addEventListener('click', toggleSleepMode);
   elements.settingsButton.addEventListener('click', openSettings);
   elements.settingsClose.addEventListener('click', closeSettings);
   elements.settingsBackdrop.addEventListener('click', closeSettings);
