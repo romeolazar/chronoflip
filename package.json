@@ -1,6 +1,6 @@
 {
   "name": "chronoflip",
-  "version": "2.12.3",
+  "version": "2.12.13",
   "private": true,
   "description": "ChronoFlip — a zero-dependency ambient clock, weather, and calendar dashboard",
   "license": "MIT",

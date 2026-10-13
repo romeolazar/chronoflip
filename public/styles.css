@@ -465,6 +465,13 @@ body { touch-action: manipulation; }
   text-transform: uppercase;
 }
 
+.weather-location > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .status-dot {
   width: 6px;
   height: 6px;
@@ -1324,6 +1331,8 @@ html[data-theme="sand"] .sun-icon { display: none; }
   flex: 0 0 auto;
   align-items: stretch;
   gap: 0;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .dashboard.show-seconds .seconds-group > .seconds-separator { display: none; }
@@ -1345,9 +1354,36 @@ html[data-theme="sand"] .sun-icon { display: none; }
   height: 100%;
   min-height: 0;
   flex: 1 1 0;
+  min-width: 0;
   border-radius: min(var(--clock-radius, 18px), 9px);
   font-size: clamp(34px, 3.6vw, 50px);
+  line-height: 1;
+  letter-spacing: -.08em;
   box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 8px 24px rgba(0,0,0,.62);
+}
+
+/* Preserve a clock-card silhouette in landscape Fill Space layouts. The old
+   100% height rule let flex width and height drift independently, producing
+   very tall cards on tablets and wide laptop panels. */
+@media (min-aspect-ratio: 1/1) {
+  .dashboard[data-clock-position="fill"]:not([data-layout="vertical"]) .flip-clock {
+    align-items: center;
+  }
+
+  .dashboard[data-clock-position="fill"]:not([data-layout="vertical"]) .flip-clock > .time-group {
+    height: auto;
+    max-height: 100%;
+    flex: 0 1 auto;
+    align-items: center;
+  }
+
+  .dashboard[data-clock-position="fill"]:not([data-layout="vertical"]) .flip-clock > .time-group > .flip-digit {
+    width: auto !important;
+    height: min(28vw, 64vh) !important;
+    max-height: 100%;
+    aspect-ratio: .72;
+    flex: 0 0 auto;
+  }
 }
 
 .dashboard.show-seconds .flip-clock > .time-group .flip-digit {
@@ -1488,19 +1524,51 @@ html[data-theme="sand"] .sun-icon { display: none; }
   font-size: min(28vw, 48vh);
 }
 
+@media (min-aspect-ratio: 1/1) {
+  .dashboard[data-display-style="focus"][data-focus-mode="clock"] .flip-clock > .time-group {
+    height: auto !important;
+    flex: none !important;
+  }
+
+  .dashboard[data-display-style="focus"][data-focus-mode="clock"] .flip-clock > .time-group > .flip-digit {
+    width: clamp(158px, 15.12vw, 302px) !important;
+    height: clamp(220px, 21vw, 420px) !important;
+    max-height: 100%;
+    aspect-ratio: auto;
+    flex: none !important;
+    font-size: min(14.5vw, 37vh);
+  }
+
+  .dashboard[data-display-style="focus"][data-focus-mode="clock"] .flip-clock > .time-group > .flip-digit > span,
+  .dashboard[data-display-style="focus"][data-focus-mode="clock"] .flip-clock > .time-group > .flip-digit .flap span {
+    transform: translate(-.035em, -.025em);
+  }
+}
+
 .dashboard[data-display-style="focus"] .clock-region:not(:first-child) { min-height: 0; }
 
 .dashboard[data-display-style="focus"][data-focus-mode="weather"] .clock-region .flip-digit,
 .dashboard[data-display-style="focus"][data-focus-mode="calendar"] .clock-region .flip-digit,
 .dashboard[data-display-style="focus"][data-focus-mode="weather"].show-seconds .clock-region .flip-clock > .time-group .flip-digit,
 .dashboard[data-display-style="focus"][data-focus-mode="calendar"].show-seconds .clock-region .flip-clock > .time-group .flip-digit {
-  height: min(7.2vw, 13vh);
-  font-size: min(5.4vw, 9.5vh);
+  width: clamp(50px, 5.2vw, 76px) !important;
+  height: clamp(69px, 7.22vw, 106px) !important;
+  flex: none !important;
+  aspect-ratio: auto;
+  font-size: clamp(46px, 5.4vw, 78px);
   border-radius: min(var(--clock-radius, 18px), 12px);
 }
 
+.dashboard[data-display-style="focus"][data-focus-mode="weather"] .clock-region .flip-clock > .time-group,
+.dashboard[data-display-style="focus"][data-focus-mode="calendar"] .clock-region .flip-clock > .time-group {
+  width: auto;
+  height: auto !important;
+  flex: none !important;
+  gap: clamp(3px, .4vw, 6px);
+}
+
 .dashboard[data-display-style="focus"][data-focus-mode="weather"] .clock-region .clock-row,
-.dashboard[data-display-style="focus"][data-focus-mode="calendar"] .clock-region .clock-row { width: 91%; }
+.dashboard[data-display-style="focus"][data-focus-mode="calendar"] .clock-region .clock-row { width: 100%; }
 .dashboard[data-display-style="focus"][data-focus-mode="weather"] .clock-region .flip-clock,
 .dashboard[data-display-style="focus"][data-focus-mode="calendar"] .clock-region .flip-clock { gap: clamp(4px, .55vw, 8px); }
 .dashboard[data-display-style="focus"][data-focus-mode="weather"] .clock-region .clock-separator,
@@ -1509,21 +1577,24 @@ html[data-theme="sand"] .sun-icon { display: none; }
 .dashboard[data-display-style="focus"][data-focus-mode="calendar"] .clock-region .clock-separator i { width: clamp(8px, .65vw, 11px); height: clamp(8px, .65vw, 11px); }
 .dashboard[data-display-style="focus"][data-focus-mode="weather"].show-seconds .clock-region .seconds-group,
 .dashboard[data-display-style="focus"][data-focus-mode="calendar"].show-seconds .clock-region .seconds-group {
-  right: -3px;
-  bottom: -3px;
-  width: clamp(38px, 3.5vw, 52px);
-  height: clamp(24px, 2.3vw, 34px);
+  right: 2px;
+  bottom: -44px;
+  width: clamp(62px, 5vw, 82px);
+  height: clamp(34px, 3vw, 46px);
 }
 .dashboard[data-display-style="focus"][data-focus-mode="weather"].show-seconds .clock-region .seconds-group .flip-digit,
 .dashboard[data-display-style="focus"][data-focus-mode="calendar"].show-seconds .clock-region .seconds-group .flip-digit {
+  width: auto !important;
   height: 100%;
-  font-size: clamp(16px, 1.7vw, 24px);
+  min-width: 0;
+  flex: 1 1 0 !important;
+  font-size: clamp(17px, 1.8vw, 25px);
   border-radius: 5px;
 }
 
 .dashboard[data-display-style="focus"][data-focus-mode="weather"] .clock-region .date-line,
 .dashboard[data-display-style="focus"][data-focus-mode="calendar"] .clock-region .date-line {
-  margin-top: 8px;
+  margin-top: 80px;
   padding: 6px 4px;
   overflow: hidden;
   font-size: clamp(10px, .9vw, 14px);
@@ -1627,8 +1698,14 @@ html[data-theme="sand"] .sun-icon { display: none; }
 .dashboard[data-display-style="focus"][data-focus-mode="clock"] .weather-region,
 .dashboard[data-display-style="focus"][data-focus-mode="calendar"] .weather-region {
   grid-template-rows: auto 1fr;
-  padding: clamp(14px, 1.7vw, 26px);
+  padding: clamp(58px, 6vh, 76px) clamp(14px, 1.7vw, 26px) clamp(14px, 1.7vw, 26px);
 }
+.dashboard[data-display-style="focus"][data-focus-mode="clock"] .weather-region .current-weather,
+.dashboard[data-display-style="focus"][data-focus-mode="calendar"] .weather-region .current-weather { width: 100%; min-width: 0; }
+.dashboard[data-display-style="focus"][data-focus-mode="clock"] .weather-region .current-copy,
+.dashboard[data-display-style="focus"][data-focus-mode="calendar"] .weather-region .current-copy { min-width: 0; max-width: calc(100% - clamp(70px, 7vw, 110px)); }
+.dashboard[data-display-style="focus"][data-focus-mode="clock"] .weather-region .weather-location,
+.dashboard[data-display-style="focus"][data-focus-mode="calendar"] .weather-region .weather-location { max-width: 100%; white-space: nowrap; }
 .dashboard[data-display-style="focus"][data-focus-mode="clock"] .weather-icon,
 .dashboard[data-display-style="focus"][data-focus-mode="calendar"] .weather-icon { width: clamp(58px, 5.5vw, 88px); height: clamp(58px, 5.5vw, 88px); }
 .dashboard[data-display-style="focus"][data-focus-mode="clock"] .temperature,
