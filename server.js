@@ -104,6 +104,9 @@ function normalizeTimeZone(value) {
 
 const defaultDashboardSettings = Object.freeze({
   displayStyle: 'ambient',
+  focusMode: 'clock',
+  focusAutoRotate: false,
+  focusRotateMinutes: 3,
   language: String(config.locale).toLowerCase().startsWith('ro') ? 'ro' : 'en',
   theme: 'dark',
   fontFamily: 'roboto',
@@ -125,6 +128,7 @@ const defaultDashboardSettings = Object.freeze({
   sleepShowSeconds: config.sleepShowSeconds,
   weatherMode: 'city',
   weatherCity: config.locationName,
+  weatherRefreshMinutes: 30,
   deviceLocation: null,
   calendarUrl: config.calendarUrl
 });
@@ -132,7 +136,10 @@ const defaultDashboardSettings = Object.freeze({
 function normalizeDashboardSettings(raw = {}) {
   const source = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
   const settings = { ...defaultDashboardSettings, ...source };
-  settings.displayStyle = ['ambient', 'classic-weather'].includes(settings.displayStyle) ? settings.displayStyle : defaultDashboardSettings.displayStyle;
+  settings.displayStyle = ['ambient', 'classic-weather', 'focus'].includes(settings.displayStyle) ? settings.displayStyle : defaultDashboardSettings.displayStyle;
+  settings.focusMode = ['clock', 'weather', 'calendar'].includes(settings.focusMode) ? settings.focusMode : defaultDashboardSettings.focusMode;
+  settings.focusAutoRotate = Boolean(settings.focusAutoRotate);
+  settings.focusRotateMinutes = clampInt(settings.focusRotateMinutes, 1, 10, defaultDashboardSettings.focusRotateMinutes);
   settings.language = ['en', 'ro'].includes(settings.language) ? settings.language : defaultDashboardSettings.language;
   settings.theme = ['dark', 'light', 'midnight', 'sand'].includes(settings.theme) ? settings.theme : defaultDashboardSettings.theme;
   if (settings.fontFamily === 'serif') settings.fontFamily = 'roboto';
@@ -155,8 +162,11 @@ function normalizeDashboardSettings(raw = {}) {
     : [...defaultDashboardSettings.sleepDays];
   settings.sleepDimLevel = clampInt(settings.sleepDimLevel, 5, 100, defaultDashboardSettings.sleepDimLevel);
   settings.sleepShowSeconds = Boolean(settings.sleepShowSeconds);
-  settings.weatherMode = ['server', 'city', 'device'].includes(settings.weatherMode) ? settings.weatherMode : defaultDashboardSettings.weatherMode;
+  settings.weatherMode = settings.weatherMode === 'device' ? 'device' : 'city';
   settings.weatherCity = cleanText(settings.weatherCity || '', 100).trim();
+  settings.weatherRefreshMinutes = [15, 30, 60].includes(Number(settings.weatherRefreshMinutes))
+    ? Number(settings.weatherRefreshMinutes)
+    : defaultDashboardSettings.weatherRefreshMinutes;
   settings.calendarUrl = normalizeCalendarUrl(settings.calendarUrl);
   const deviceLocation = settings.deviceLocation;
   settings.deviceLocation = deviceLocation && Number.isFinite(Number(deviceLocation.latitude)) && Number.isFinite(Number(deviceLocation.longitude))
@@ -168,6 +178,9 @@ function normalizeDashboardSettings(raw = {}) {
     : null;
   return {
     displayStyle: settings.displayStyle,
+    focusMode: settings.focusMode,
+    focusAutoRotate: settings.focusAutoRotate,
+    focusRotateMinutes: settings.focusRotateMinutes,
     language: settings.language,
     theme: settings.theme,
     fontFamily: settings.fontFamily,
@@ -189,6 +202,7 @@ function normalizeDashboardSettings(raw = {}) {
     sleepShowSeconds: settings.sleepShowSeconds,
     weatherMode: settings.weatherMode,
     weatherCity: settings.weatherCity,
+    weatherRefreshMinutes: settings.weatherRefreshMinutes,
     deviceLocation: settings.deviceLocation,
     calendarUrl: settings.calendarUrl
   };
@@ -282,7 +296,7 @@ async function reverseGeocodeLocation(latitude, longitude, language = 'en') {
   const data = await fetchJson(url, {
     headers: {
       Accept: 'application/json',
-      'User-Agent': 'ChronoFlip/2.8.2 (https://github.com/romeolazar/chronoflip)'
+      'User-Agent': 'ChronoFlip/2.9.8 (https://github.com/romeolazar/chronoflip)'
     }
   });
   const address = data.address || {};

@@ -76,7 +76,8 @@ All settings are optional and configured with environment variables or `.env`:
 
 The settings panel includes the complete display set inspired by A Flip Clock:
 
-- Ambient and Classic Weather display styles
+- Ambient, Classic Weather, and Focus display themes
+- Focus theme with room-readable Clock, Weather, or Calendar priority modes, manual switching, and automatic 1–10 minute rotation
 - Five visibly different clock faces: Split Cards, Slate Cards, Ivory Panels, Mechanical, and Minimal
 - Dark, Light, Midnight, and Sand themes
 - Modern, Condensed, Roboto, and Monospace display fonts; the selected font also applies to the bold clock digits
@@ -91,6 +92,16 @@ The settings panel includes the complete display set inspired by A Flip Clock:
 - Reset and fullscreen kiosk controls
 
 Classic Weather places the enlarged clock over a centered weather console, with a smaller forecast row below. Clock faces scale across the full assigned clock area; optional seconds remain compact in the lower-right corner. The implementation uses this project's own HTML, CSS, flip animation, and inline SVG weather symbols; it does not bundle code or artwork from the visual reference projects.
+
+Focus gives one widget most of the screen while keeping the other two visible as compact companion cards. Weather priority includes sunrise and sunset, precipitation probability, daily low/high temperatures, and a five-day icon forecast. The initial panel, automatic rotation, and 1–10 minute interval are shared through the server settings.
+
+Focus changes use a smooth 680 ms position, resize, and fade transition. Devices configured to reduce motion switch panels instantly.
+
+Weather refresh can be shared across every connected display at 15, 30, or 60-minute intervals.
+
+Weather icons animate while fresh data is loading, then settle with a short confirmation animation. Reduced-motion preferences disable these effects.
+
+Current-condition icons follow the provider's day/night flag, including clear moon, stars, partly cloudy night, fog, rain, and snow variants.
 
 Fill Space expands the hour and minute cards across all available room above the weather and calendar. When seconds are enabled, they remain animated in a small lower-right corner card instead of consuming a third full-size panel or covering the minute digit. While Fill Space is active, the Size control is held at 100%; its previous value is preserved and returns when Center or Top is selected.
 

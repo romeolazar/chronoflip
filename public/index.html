@@ -12,7 +12,7 @@
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
     <link rel="manifest" href="/site.webmanifest">
-    <link rel="stylesheet" href="/styles.css?v=2.8.2">
+  <link rel="stylesheet" href="/styles.css?v=2.9.8">
   </head>
   <body>
     <main class="dashboard" id="dashboard">
@@ -54,6 +54,21 @@
             <div class="feels" id="feels"></div>
           </div>
         </div>
+        <div class="focus-weather-details" id="focus-weather-details" aria-label="Weather details" data-i18n-aria="weatherDetails">
+          <div class="focus-sun-cycle">
+            <div class="focus-sun-time">
+              <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 24h22M8 20a8 8 0 0 1 16 0M16 4v5M6.5 10.5l3.5 3.5M25.5 10.5 22 14M13 24l3-3 3 3"/></svg>
+              <span data-i18n="sunrise">Sunrise</span><strong id="focus-sunrise">--:--</strong>
+            </div>
+            <i></i>
+            <div class="focus-sun-time">
+              <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 24h22M8 20a8 8 0 0 1 16 0M16 4v5M6.5 10.5l3.5 3.5M25.5 10.5 22 14M13 21l3 3 3-3"/></svg>
+              <span data-i18n="sunset">Sunset</span><strong id="focus-sunset">--:--</strong>
+            </div>
+          </div>
+          <div class="focus-weather-stat"><svg class="focus-stat-icon" viewBox="0 0 36 36" aria-hidden="true"><path d="M9 21h18a6 6 0 0 0 0-12 9.5 9.5 0 0 0-18-1A6.5 6.5 0 0 0 9 21Z"/><path d="m11 26-2 5m10-5-2 5m10-5-2 5"/></svg><span data-i18n="precipitation">Precipitation</span><strong id="focus-precipitation">--%</strong></div>
+          <div class="focus-weather-stat"><svg class="focus-stat-icon" viewBox="0 0 36 36" aria-hidden="true"><path d="M15 22.5V7a5 5 0 0 1 10 0v15.5a8 8 0 1 1-10 0Z"/><path d="M20 11v15"/><circle cx="20" cy="27" r="3"/></svg><span data-i18n="lowHigh">Low / High</span><strong id="focus-low-high">--° / --°</strong></div>
+        </div>
         <div class="forecast" id="forecast" aria-label="Five day forecast" data-i18n-aria="fiveDayForecast"></div>
         </section>
       </div>
@@ -62,6 +77,13 @@
         <div class="section-label" data-i18n="upNext">UP NEXT</div>
         <div class="agenda" id="agenda"></div>
       </section>
+
+      <nav class="focus-controls" id="focus-controls" aria-label="Focus panel" data-i18n-aria="focusPanel">
+        <button type="button" data-focus-control="clock" data-i18n="focusClock">Clock</button>
+        <button type="button" data-focus-control="weather" data-i18n="focusWeather">Weather</button>
+        <button type="button" data-focus-control="calendar" data-i18n="focusCalendar">Calendar</button>
+        <span class="focus-rotation-status" id="focus-rotation-status"></span>
+      </nav>
 
       <nav class="screen-controls" id="screen-controls" aria-label="Display controls" data-i18n-aria="displayControls">
         <button class="icon-button" id="theme-toggle" type="button" aria-label="Switch light or dark mode" title="Light / dark mode" data-i18n-aria="switchTheme" data-i18n-title="lightDarkMode">
@@ -91,12 +113,25 @@
 
       <div class="settings-scroll">
         <section class="settings-section">
-          <h3 data-i18n="displayStyle">Display style</h3>
-          <div class="choice-grid two display-style-options" id="display-style-options">
+          <h3 data-i18n="displayStyle">Themes</h3>
+          <div class="choice-grid three display-style-options" id="display-style-options">
             <button type="button" data-display-style="ambient"><i class="style-preview ambient"></i><span data-i18n="ambient">Ambient</span></button>
             <button type="button" data-display-style="classic-weather"><i class="style-preview classic"></i><span data-i18n="classicWeather">Classic weather</span></button>
+            <button type="button" data-display-style="focus"><i class="style-preview focus"></i><span data-i18n="focusTheme">Focus</span></button>
           </div>
-          <p class="field-help" data-i18n="classicHelp">Classic weather is an original open-source interpretation of the retro two-panel clock layout.</p>
+          <p class="field-help" data-i18n="themesHelp">Choose a dashboard arrangement. Focus can rotate clock, weather, and calendar.</p>
+        </section>
+
+        <section class="settings-section" id="focus-settings" hidden>
+          <h3 data-i18n="focusRotation">Focus rotation</h3>
+          <label class="field-label" data-i18n="startsWith">Starts with</label>
+          <div class="choice-grid three" id="focus-mode-options">
+            <button type="button" data-focus-mode="clock" data-i18n="focusClock">Clock</button>
+            <button type="button" data-focus-mode="weather" data-i18n="focusWeather">Weather</button>
+            <button type="button" data-focus-mode="calendar" data-i18n="focusCalendar">Calendar</button>
+          </div>
+          <label class="switch-row"><span><b data-i18n="autoRotate">Automatic rotation</b><small data-i18n="autoRotateHelp">Cycle through clock, weather, and calendar</small></span><input id="setting-focus-auto" type="checkbox"><i></i></label>
+          <label class="range-row"><span><span data-i18n="rotationInterval">Rotation interval</span> <output id="focus-interval-output">3 min</output></span><input id="setting-focus-interval" type="range" min="1" max="10" step="1" value="3"></label>
         </section>
 
         <section class="settings-section">
@@ -108,7 +143,7 @@
         </section>
 
         <section class="settings-section">
-          <h3 data-i18n="theme">Theme</h3>
+          <h3 data-i18n="theme">Styles</h3>
           <div class="choice-grid themes" id="theme-options">
             <button type="button" data-theme-option="dark"><i class="swatch dark"></i><span data-i18n="dark">Dark</span></button>
             <button type="button" data-theme-option="light"><i class="swatch light"></i><span data-i18n="light">Light</span></button>
@@ -194,13 +229,19 @@
           <h3 data-i18n="weatherLocation">Weather location</h3>
           <label class="field-label" for="weather-mode" data-i18n="locationSource">Location source</label>
           <select class="text-input" id="weather-mode">
-            <option value="server" data-i18n="dockerDefaults">Docker defaults</option>
             <option value="city" data-i18n="cityName">City name</option>
             <option value="device" data-i18n="deviceLocation">Device location</option>
           </select>
           <label class="field-label city-field" id="city-field" for="weather-city" data-i18n="city">City</label>
           <input class="text-input city-field" id="weather-city" type="text" maxlength="100" placeholder="e.g. Timisoara, Romania" data-i18n-placeholder="cityPlaceholder" autocomplete="off">
           <p class="field-help" id="location-help" data-i18n="locationHelp">Device location needs browser permission and usually HTTPS on a LAN. Location names © OpenStreetMap contributors.</p>
+          <label class="field-label" data-i18n="weatherRefresh">Weather refresh</label>
+          <div class="choice-grid three" id="weather-refresh-options">
+            <button type="button" data-weather-refresh="15">15 min</button>
+            <button type="button" data-weather-refresh="30">30 min</button>
+            <button type="button" data-weather-refresh="60">60 min</button>
+          </div>
+          <p class="field-help" data-i18n="weatherRefreshHelp">How often every connected display requests fresh weather data.</p>
         </section>
 
         <section class="settings-section">
@@ -220,6 +261,6 @@
       </footer>
     </aside>
 
-    <script src="/app.js?v=2.8.2" defer></script>
+  <script src="/app.js?v=2.9.8" defer></script>
   </body>
 </html>

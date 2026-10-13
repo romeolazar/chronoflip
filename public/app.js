@@ -16,6 +16,11 @@ const state = {
   sleepAwakeUntil: 0,
   sleepPreviewUntil: 0,
   sleepWakeTimer: null,
+  focusMode: 'clock',
+  focusTimer: null,
+  focusControlsTimer: null,
+  weatherTimer: null,
+  weatherAnimationTimer: null,
   settingsRevision: 0,
   settingsSyncing: false
 };
@@ -32,12 +37,19 @@ const elements = {
   condition: document.querySelector('#condition'),
   feels: document.querySelector('#feels'),
   forecast: document.querySelector('#forecast'),
+  focusSunrise: document.querySelector('#focus-sunrise'),
+  focusSunset: document.querySelector('#focus-sunset'),
+  focusPrecipitation: document.querySelector('#focus-precipitation'),
+  focusLowHigh: document.querySelector('#focus-low-high'),
   agendaRegion: document.querySelector('#agenda-region'),
+  agendaLabel: document.querySelector('#agenda-region .section-label'),
   agenda: document.querySelector('#agenda'),
   offline: document.querySelector('#offline-badge'),
   fullscreen: document.querySelector('#fullscreen-button'),
   themeToggle: document.querySelector('#theme-toggle'),
   sleepToggle: document.querySelector('#sleep-toggle'),
+  focusControls: document.querySelector('#focus-controls'),
+  focusRotationStatus: document.querySelector('#focus-rotation-status'),
   settingsButton: document.querySelector('#settings-button'),
   settingsPanel: document.querySelector('#settings-panel'),
   settingsBackdrop: document.querySelector('#settings-backdrop'),
@@ -58,6 +70,10 @@ const elements = {
   sleepDimOutput: document.querySelector('#sleep-dim-output'),
   sleepSeconds: document.querySelector('#setting-sleep-seconds'),
   previewSleep: document.querySelector('#preview-sleep'),
+  focusSettings: document.querySelector('#focus-settings'),
+  focusAuto: document.querySelector('#setting-focus-auto'),
+  focusInterval: document.querySelector('#setting-focus-interval'),
+  focusIntervalOutput: document.querySelector('#focus-interval-output'),
   weatherMode: document.querySelector('#weather-mode'),
   weatherCity: document.querySelector('#weather-city'),
   calendarUrl: document.querySelector('#calendar-url'),
@@ -68,9 +84,10 @@ const elements = {
 
 const messages = {
   en: {
-    pageTitle: 'ChronoFlip', appName: 'CHRONOFLIP', settings: 'Settings', displayStyle: 'Display style',
-    ambient: 'Ambient', classicWeather: 'Classic weather', classicHelp: 'Classic weather is an original open-source interpretation of the retro two-panel clock layout.',
-    language: 'Language', theme: 'Theme', dark: 'Dark', light: 'Light', midnight: 'Midnight', sand: 'Sand',
+    pageTitle: 'ChronoFlip', appName: 'CHRONOFLIP', settings: 'Settings', displayStyle: 'Themes',
+    ambient: 'Ambient', classicWeather: 'Classic weather', focusTheme: 'Focus', themesHelp: 'Choose a dashboard arrangement. Focus can rotate clock, weather, and calendar.',
+    focusRotation: 'Focus rotation', startsWith: 'Starts with', focusClock: 'Clock', focusWeather: 'Weather', focusCalendar: 'Calendar', autoRotate: 'Automatic rotation', autoRotateHelp: 'Cycle through clock, weather, and calendar', rotationInterval: 'Rotation interval', rotationManual: 'Manual', rotationEvery: 'Every {minutes} min', focusPanel: 'Focus panel',
+    language: 'Language', theme: 'Styles', dark: 'Dark', light: 'Light', midnight: 'Midnight', sand: 'Sand',
     typography: 'Display font', fontModern: 'Modern', fontCondensed: 'Condensed', fontRoboto: 'Roboto', fontMono: 'Monospace', fontHelp: 'Applies to the clock digits, labels, weather, date, calendar, and settings.',
     clockFace: 'Clock face', splitCards: 'Split cards', twinDark: 'Slate cards', twinLight: 'Ivory panels', mechanical: 'Mechanical', minimal: 'Minimal',
     clockFaceHelp: 'Each face changes the cards, divider, shadows, and number treatment.',
@@ -80,13 +97,13 @@ const messages = {
     sleepSchedule: 'Sleep schedule', sleepEnabled: 'Enable sleep mode', sleepEnabledHelp: 'Show only a dimmed clock during the selected hours', sleepStart: 'Starts', sleepEnd: 'Ends', sleepDays: 'Active days',
     sleepBrightness: 'Sleep brightness', sleepSeconds: 'Seconds during sleep', sleepSecondsHelp: 'Keep compact seconds visible in the clock corner', sleepHelp: 'The schedule follows the dashboard timezone. Tap the sleeping clock once to reveal controls temporarily.', previewSleep: 'Preview for 15 seconds',
     mondayShort: 'M', tuesdayShort: 'T', wednesdayShort: 'W', thursdayShort: 'T', fridayShort: 'F', saturdayShort: 'S', sundayShort: 'S', weatherLocation: 'Weather location', locationSource: 'Location source',
-    dockerDefaults: 'Docker defaults', cityName: 'City name', deviceLocation: 'Device location', city: 'City', cityPlaceholder: 'e.g. Timisoara, Romania',
-    locationHelp: 'Device location needs browser permission and usually HTTPS on a LAN. Location names © OpenStreetMap contributors.', calendar: 'Calendar', publicCalendarUrl: 'Public iCal / ICS URL',
+    cityName: 'City name', deviceLocation: 'Device location', city: 'City', cityPlaceholder: 'e.g. Timisoara, Romania',
+    locationHelp: 'Device location needs browser permission and usually HTTPS on a LAN. Location names © OpenStreetMap contributors.', weatherRefresh: 'Weather refresh', weatherRefreshHelp: 'How often every connected display requests fresh weather data.', calendar: 'Calendar', publicCalendarUrl: 'Public iCal / ICS URL',
     calendarHelp: 'Leave blank to use the Docker-mounted calendar file or configured URL.', reset: 'Reset', enterKiosk: 'Enter kiosk', apply: 'Apply', upNext: 'UP NEXT',
     timeAndDate: 'Time and date', currentWeather: 'Current weather', fiveDayForecast: 'Five day forecast', upcomingEvents: 'Upcoming calendar events', displayControls: 'Display controls',
     switchTheme: 'Switch light or dark mode', lightDarkMode: 'Light / dark mode', enableSleep: 'Enter sleep mode now', disableSleep: 'Exit sleep mode', openSettings: 'Open settings', closeSettings: 'Close settings', enterFullscreen: 'Enter fullscreen',
     fullscreenKiosk: 'Fullscreen / kiosk mode', dashboardSettings: 'Dashboard settings', offline: 'OFFLINE · SHOWING LAST UPDATE', loadingWeather: 'Loading weather', updating: 'Updating…',
-    currentConditions: 'Current conditions', feels: 'Feels', humidity: 'Humidity', wind: 'Wind', high: 'High', low: 'Low', today: 'Today', tomorrow: 'Tomorrow', allDay: 'All day',
+    currentConditions: 'Current conditions', feels: 'Feels', humidity: 'Humidity', wind: 'Wind', high: 'High', low: 'Low', today: 'Today', tomorrow: 'Tomorrow', allDay: 'All day', weatherDetails: 'Weather details', sunrise: 'Sunrise', sunset: 'Sunset', precipitation: 'Precipitation', lowHigh: 'Low / High',
     nextSevenDays: 'Next 7 days', nothingScheduled: 'Nothing scheduled', currentLocation: 'Current location', settingsSaved: 'Saved on the server and synchronized to all displays.', loadingSettings: 'Saving shared settings…',
     defaultsRestored: 'Defaults restored.', requestingLocation: 'Requesting device location…', calendarUrlError: 'Calendar URL must begin with https:// or http://', cityRequired: 'Enter a city name for weather.', sleepTimeError: 'Choose a valid start and end time.',
     fullscreenUnavailable: 'Fullscreen is not supported by this browser. Use its kiosk/fullscreen option instead.', locationUnavailable: 'This browser does not provide device location',
@@ -98,9 +115,10 @@ const messages = {
     weatherThunderstorm: 'Thunderstorm', weatherThunderHail: 'Thunder & hail'
   },
   ro: {
-    pageTitle: 'ChronoFlip', appName: 'CHRONOFLIP', settings: 'Setări', displayStyle: 'Stil de afișare',
-    ambient: 'Ambiental', classicWeather: 'Vreme clasică', classicHelp: 'Vreme clasică este o interpretare originală open-source a aspectului retro cu două panouri.',
-    language: 'Limbă', theme: 'Temă', dark: 'Întunecat', light: 'Luminos', midnight: 'Noapte', sand: 'Nisip',
+    pageTitle: 'ChronoFlip', appName: 'CHRONOFLIP', settings: 'Setări', displayStyle: 'Teme',
+    ambient: 'Ambiental', classicWeather: 'Vreme clasică', focusTheme: 'Focus', themesHelp: 'Alege aranjarea tabloului. Focus poate roti ceasul, vremea și calendarul.',
+    focusRotation: 'Rotație Focus', startsWith: 'Începe cu', focusClock: 'Ceas', focusWeather: 'Vreme', focusCalendar: 'Calendar', autoRotate: 'Rotație automată', autoRotateHelp: 'Comută între ceas, vreme și calendar', rotationInterval: 'Interval rotație', rotationManual: 'Manual', rotationEvery: 'La {minutes} min', focusPanel: 'Panou Focus',
+    language: 'Limbă', theme: 'Stiluri', dark: 'Întunecat', light: 'Luminos', midnight: 'Noapte', sand: 'Nisip',
     typography: 'Font de afișare', fontModern: 'Modern', fontCondensed: 'Îngust', fontRoboto: 'Roboto', fontMono: 'Monospațiat', fontHelp: 'Se aplică cifrelor ceasului, etichetelor, vremii, datei, calendarului și setărilor.',
     clockFace: 'Aspectul ceasului', splitCards: 'Cartele separate', twinDark: 'Panouri grafit', twinLight: 'Panouri fildeș', mechanical: 'Mecanic', minimal: 'Minimal',
     clockFaceHelp: 'Fiecare aspect schimbă panourile, separatorul, umbrele și stilul cifrelor.',
@@ -110,13 +128,13 @@ const messages = {
     sleepSchedule: 'Program de somn', sleepEnabled: 'Activează modul de somn', sleepEnabledHelp: 'Afișează numai ceasul estompat în orele selectate', sleepStart: 'Începe', sleepEnd: 'Se termină', sleepDays: 'Zile active',
     sleepBrightness: 'Luminozitate în somn', sleepSeconds: 'Secunde în timpul somnului', sleepSecondsHelp: 'Păstrează secundele compacte în colțul ceasului', sleepHelp: 'Programul urmează fusul orar al tabloului. Atinge o dată ceasul în repaus pentru a afișa temporar comenzile.', previewSleep: 'Previzualizare 15 secunde',
     mondayShort: 'L', tuesdayShort: 'M', wednesdayShort: 'M', thursdayShort: 'J', fridayShort: 'V', saturdayShort: 'S', sundayShort: 'D', weatherLocation: 'Locația meteo', locationSource: 'Sursa locației',
-    dockerDefaults: 'Setările Docker', cityName: 'Numele orașului', deviceLocation: 'Locația dispozitivului', city: 'Oraș', cityPlaceholder: 'ex. Timișoara, România',
-    locationHelp: 'Locația dispozitivului necesită permisiunea browserului și, de obicei, HTTPS în rețeaua locală. Denumirile locațiilor © colaboratorii OpenStreetMap.', calendar: 'Calendar', publicCalendarUrl: 'Adresă publică iCal / ICS',
+    cityName: 'Numele orașului', deviceLocation: 'Locația dispozitivului', city: 'Oraș', cityPlaceholder: 'ex. Timișoara, România',
+    locationHelp: 'Locația dispozitivului necesită permisiunea browserului și, de obicei, HTTPS în rețeaua locală. Denumirile locațiilor © colaboratorii OpenStreetMap.', weatherRefresh: 'Actualizare vreme', weatherRefreshHelp: 'Cât de des solicită fiecare ecran conectat date meteo noi.', calendar: 'Calendar', publicCalendarUrl: 'Adresă publică iCal / ICS',
     calendarHelp: 'Lasă necompletat pentru fișierul calendar montat în Docker sau adresa configurată.', reset: 'Resetează', enterKiosk: 'Mod chioșc', apply: 'Aplică', upNext: 'URMEAZĂ',
     timeAndDate: 'Ora și data', currentWeather: 'Vremea actuală', fiveDayForecast: 'Prognoza pe cinci zile', upcomingEvents: 'Evenimente viitoare', displayControls: 'Comenzi afișaj',
     switchTheme: 'Comută modul luminos sau întunecat', lightDarkMode: 'Mod luminos / întunecat', enableSleep: 'Activează acum modul de somn', disableSleep: 'Ieși din modul de somn', openSettings: 'Deschide setările', closeSettings: 'Închide setările', enterFullscreen: 'Intră în ecran complet',
     fullscreenKiosk: 'Ecran complet / mod chioșc', dashboardSettings: 'Setările tabloului', offline: 'OFFLINE · SE AFIȘEAZĂ ULTIMA ACTUALIZARE', loadingWeather: 'Se încarcă vremea', updating: 'Se actualizează…',
-    currentConditions: 'Condiții actuale', feels: 'Resimțită', humidity: 'Umiditate', wind: 'Vânt', high: 'Max', low: 'Min', today: 'Astăzi', tomorrow: 'Mâine', allDay: 'Toată ziua',
+    currentConditions: 'Condiții actuale', feels: 'Resimțită', humidity: 'Umiditate', wind: 'Vânt', high: 'Max', low: 'Min', today: 'Astăzi', tomorrow: 'Mâine', allDay: 'Toată ziua', weatherDetails: 'Detalii meteo', sunrise: 'Răsărit', sunset: 'Apus', precipitation: 'Precipitații', lowHigh: 'Min / Max',
     nextSevenDays: 'Următoarele 7 zile', nothingScheduled: 'Nimic programat', currentLocation: 'Locația curentă', settingsSaved: 'Salvat pe server și sincronizat pe toate ecranele.', loadingSettings: 'Se salvează setările comune…',
     defaultsRestored: 'Setările implicite au fost restaurate.', requestingLocation: 'Se solicită locația dispozitivului…', calendarUrlError: 'Adresa calendarului trebuie să înceapă cu https:// sau http://', cityRequired: 'Introdu un oraș pentru vreme.', sleepTimeError: 'Alege ore valide pentru început și sfârșit.',
     fullscreenUnavailable: 'Ecranul complet nu este acceptat de acest browser. Folosește opțiunea de ecran complet sau chioșc a browserului.', locationUnavailable: 'Acest browser nu oferă locația dispozitivului',
@@ -183,23 +201,25 @@ function escapeHtml(value) {
 
 function weatherIcon(code, isDay = true) {
   const stroke = 'stroke-width="2.1"';
+  const nightSky = isDay ? '' : '<path class="moon" d="M30 8a14 14 0 1 0 15 20A12 12 0 0 1 30 8Z"/><g class="stars"><circle cx="49" cy="12" r="1.5"/><circle cx="53" cy="23" r="1"/><circle cx="13" cy="15" r="1.2"/></g>';
   if (code === 0) {
+    if (!isDay) return `<svg viewBox="0 0 64 64" role="img">${nightSky}</svg>`;
     return `<svg viewBox="0 0 64 64" role="img"><circle class="sun" cx="32" cy="32" r="11"/><g class="stroke sun-rays" ${stroke}><path d="M32 6v8M32 50v8M6 32h8M50 32h8M13.5 13.5l5.7 5.7M44.8 44.8l5.7 5.7M50.5 13.5l-5.7 5.7M19.2 44.8l-5.7 5.7"/></g></svg>`;
   }
   if (code <= 3) {
     const celestial = isDay
       ? '<circle class="sun" cx="23" cy="23" r="10"/>'
-      : '<path fill="#d8d8d5" d="M31 9a15 15 0 1 0 15 20A13 13 0 0 1 31 9Z"/>';
+      : nightSky;
     return `<svg viewBox="0 0 64 64" role="img">${celestial}<path class="cloud" d="M18 48h31a10 10 0 0 0 1-20 16 16 0 0 0-30-2 11 11 0 0 0-2 22Z"/></svg>`;
   }
   if (code === 45 || code === 48) {
-    return `<svg viewBox="0 0 64 64" role="img"><g class="stroke" ${stroke}><path d="M13 23h38M9 32h39M16 41h39"/></g></svg>`;
+    return `<svg viewBox="0 0 64 64" role="img">${nightSky}<g class="stroke" ${stroke}><path d="M13 27h38M9 36h39M16 45h39"/></g></svg>`;
   }
   if ((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) {
-    return `<svg viewBox="0 0 64 64" role="img"><path class="cloud" d="M13 38h38a10 10 0 0 0-1-20 16 16 0 0 0-30 1 10 10 0 0 0-7 19Z"/><g class="stroke" stroke="#75a9c8" ${stroke}><path d="M20 46l-3 7M33 46l-3 7M46 46l-3 7"/></g></svg>`;
+    return `<svg viewBox="0 0 64 64" role="img">${nightSky}<path class="cloud" d="M13 38h38a10 10 0 0 0-1-20 16 16 0 0 0-30 1 10 10 0 0 0-7 19Z"/><g class="stroke" stroke="#75a9c8" ${stroke}><path d="M20 46l-3 7M33 46l-3 7M46 46l-3 7"/></g></svg>`;
   }
   if ((code >= 71 && code <= 77) || code === 85 || code === 86) {
-    return `<svg viewBox="0 0 64 64" role="img"><path class="cloud" d="M13 35h38a10 10 0 0 0-1-20 16 16 0 0 0-30 1 10 10 0 0 0-7 19Z"/><g fill="#d8d8d5"><circle cx="19" cy="47" r="2"/><circle cx="32" cy="51" r="2"/><circle cx="45" cy="47" r="2"/></g></svg>`;
+    return `<svg viewBox="0 0 64 64" role="img">${nightSky}<path class="cloud" d="M13 35h38a10 10 0 0 0-1-20 16 16 0 0 0-30 1 10 10 0 0 0-7 19Z"/><g fill="#d8d8d5"><circle cx="19" cy="47" r="2"/><circle cx="32" cy="51" r="2"/><circle cx="45" cy="47" r="2"/></g></svg>`;
   }
   if (code >= 95) {
     return `<svg viewBox="0 0 64 64" role="img"><path class="cloud" d="M13 35h38a10 10 0 0 0-1-20 16 16 0 0 0-30 1 10 10 0 0 0-7 19Z"/><path fill="#e2b65c" d="M32 39h9l-8 9h6L26 61l4-10h-6Z"/></svg>`;
@@ -210,6 +230,9 @@ function weatherIcon(code, isDay = true) {
 function buildDefaults(config) {
   return {
     displayStyle: 'ambient',
+    focusMode: 'clock',
+    focusAutoRotate: false,
+    focusRotateMinutes: 3,
     language: String(config.locale || '').toLowerCase().startsWith('ro') ? 'ro' : 'en',
     theme: 'dark',
     fontFamily: 'roboto',
@@ -231,6 +254,7 @@ function buildDefaults(config) {
     sleepShowSeconds: Boolean(config.sleepShowSeconds),
     weatherMode: 'city',
     weatherCity: config.locationName || 'Timisoara, Romania',
+    weatherRefreshMinutes: 30,
     deviceLocation: null,
     calendarUrl: config.calendarUrl || 'http://better-f1-calendar.vercel.app/api/calendar.ics'
   };
@@ -239,7 +263,10 @@ function buildDefaults(config) {
 function normalizeSettings(raw, defaults) {
   const source = raw && typeof raw === 'object' ? raw : {};
   const settings = { ...defaults, ...source };
-  settings.displayStyle = ['ambient', 'classic-weather'].includes(settings.displayStyle) ? settings.displayStyle : defaults.displayStyle;
+  settings.displayStyle = ['ambient', 'classic-weather', 'focus'].includes(settings.displayStyle) ? settings.displayStyle : defaults.displayStyle;
+  settings.focusMode = ['clock', 'weather', 'calendar'].includes(settings.focusMode) ? settings.focusMode : defaults.focusMode;
+  settings.focusAutoRotate = Boolean(settings.focusAutoRotate);
+  settings.focusRotateMinutes = Math.min(10, Math.max(1, Math.round(Number(settings.focusRotateMinutes) || defaults.focusRotateMinutes)));
   settings.language = ['en', 'ro'].includes(settings.language) ? settings.language : defaults.language;
   settings.theme = ['dark', 'light', 'midnight', 'sand'].includes(settings.theme) ? settings.theme : defaults.theme;
   if (settings.fontFamily === 'serif') settings.fontFamily = 'roboto';
@@ -260,8 +287,9 @@ function normalizeSettings(raw, defaults) {
     .map(Number).filter((day) => Number.isInteger(day) && day >= 0 && day <= 6))];
   settings.sleepDimLevel = Math.min(100, Math.max(5, Number(settings.sleepDimLevel) || defaults.sleepDimLevel));
   settings.sleepShowSeconds = Boolean(settings.sleepShowSeconds);
-  settings.weatherMode = ['server', 'city', 'device'].includes(settings.weatherMode) ? settings.weatherMode : 'server';
+  settings.weatherMode = settings.weatherMode === 'device' ? 'device' : 'city';
   settings.weatherCity = String(settings.weatherCity || '').slice(0, 100);
+  settings.weatherRefreshMinutes = [15, 30, 60].includes(Number(settings.weatherRefreshMinutes)) ? Number(settings.weatherRefreshMinutes) : 30;
   settings.calendarUrl = String(settings.calendarUrl || '').slice(0, 2000);
   settings.showSeconds = Boolean(settings.showSeconds);
   settings.showDate = settings.showDate !== false;
@@ -286,12 +314,14 @@ function markActive(selector, attribute, value) {
 function syncSettingsPanel() {
   const settings = state.settings;
   markActive('[data-display-style]', 'displayStyle', settings.displayStyle);
+  markActive('[data-focus-mode]', 'focusMode', settings.focusMode);
   markActive('[data-language]', 'language', settings.language);
   markActive('[data-theme-option]', 'themeOption', settings.theme);
   markActive('[data-font-family]', 'fontFamily', settings.fontFamily);
   markActive('[data-flip-style]', 'flipStyle', settings.flipStyle);
   markActive('[data-layout]', 'layout', settings.layout);
   markActive('[data-position]', 'position', settings.clockPosition);
+  markActive('[data-weather-refresh]', 'weatherRefresh', String(settings.weatherRefreshMinutes));
   elements.settingSeconds.checked = settings.showSeconds;
   elements.settingBlinkSeparator.checked = settings.blinkSeparator;
   elements.settingDate.checked = settings.showDate;
@@ -307,6 +337,10 @@ function syncSettingsPanel() {
   elements.sleepDim.value = settings.sleepDimLevel;
   elements.sleepDimOutput.textContent = `${settings.sleepDimLevel}%`;
   elements.sleepSeconds.checked = settings.sleepShowSeconds;
+  elements.focusSettings.hidden = settings.displayStyle !== 'focus';
+  elements.focusAuto.checked = settings.focusAutoRotate;
+  elements.focusInterval.value = settings.focusRotateMinutes;
+  elements.focusIntervalOutput.textContent = `${settings.focusRotateMinutes} min`;
   document.querySelectorAll('[data-sleep-day]').forEach((button) => {
     button.classList.toggle('active', settings.sleepDays.includes(Number(button.dataset.sleepDay)));
   });
@@ -315,6 +349,72 @@ function syncSettingsPanel() {
   elements.calendarUrl.value = settings.calendarUrl;
   document.querySelectorAll('.city-field').forEach((field) => { field.hidden = settings.weatherMode !== 'city'; });
   syncSleepToggle();
+}
+
+function setFocusMode(mode, restartRotation = true, animateTransition = true) {
+  if (!['clock', 'weather', 'calendar'].includes(mode)) return;
+  const previousMode = elements.dashboard.dataset.focusMode;
+  const widgets = [
+    elements.dashboard.querySelector('.clock-region'),
+    elements.dashboard.querySelector('.weather-region'),
+    elements.dashboard.querySelector('.agenda-region')
+  ].filter(Boolean);
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const shouldAnimate = animateTransition
+    && state.settings?.displayStyle === 'focus'
+    && previousMode
+    && previousMode !== mode
+    && !reduceMotion;
+  const previousRects = shouldAnimate
+    ? new Map(widgets.map((widget) => [widget, widget.getBoundingClientRect()]))
+    : null;
+
+  state.focusMode = mode;
+  elements.dashboard.dataset.focusMode = mode;
+  markActive('[data-focus-control]', 'focusControl', mode);
+
+  if (previousRects) {
+    const primarySelector = mode === 'clock' ? '.clock-region' : mode === 'weather' ? '.weather-region' : '.agenda-region';
+    widgets.forEach((widget) => {
+      widget.getAnimations().forEach((animation) => animation.cancel());
+      const before = previousRects.get(widget);
+      const after = widget.getBoundingClientRect();
+      if (!before.width || !before.height || !after.width || !after.height) return;
+      const translateX = before.left - after.left;
+      const translateY = before.top - after.top;
+      const scaleX = before.width / after.width;
+      const scaleY = before.height / after.height;
+      widget.animate([
+        {
+          transform: `translate(${translateX}px, ${translateY}px) scale(${scaleX}, ${scaleY})`,
+          opacity: widget.matches(primarySelector) ? .68 : .82
+        },
+        { transform: 'translate(0, 0) scale(1, 1)', opacity: 1 }
+      ], {
+        duration: 680,
+        easing: 'cubic-bezier(.22, .8, .2, 1)',
+        fill: 'both'
+      });
+    });
+  }
+  if (restartRotation) scheduleFocusRotation();
+}
+
+function scheduleFocusRotation() {
+  clearInterval(state.focusTimer);
+  state.focusTimer = null;
+  const settings = state.settings;
+  if (!settings) return;
+  const automatic = settings.displayStyle === 'focus' && settings.focusAutoRotate;
+  elements.focusRotationStatus.textContent = automatic
+    ? t('rotationEvery').replace('{minutes}', settings.focusRotateMinutes)
+    : t('rotationManual');
+  if (!automatic) return;
+  const modes = ['clock', 'weather', 'calendar'];
+  state.focusTimer = setInterval(() => {
+    const next = (modes.indexOf(state.focusMode) + 1) % modes.length;
+    setFocusMode(modes[next], false);
+  }, settings.focusRotateMinutes * 60_000);
 }
 
 function syncSleepToggle() {
@@ -342,6 +442,9 @@ function applySettings() {
   document.documentElement.dataset.font = settings.fontFamily;
   translateDocument();
   elements.dashboard.dataset.displayStyle = settings.displayStyle;
+  elements.agendaLabel.textContent = settings.displayStyle === 'focus' ? t('focusCalendar') : t('upNext');
+  state.focusMode = settings.focusMode;
+  setFocusMode(state.focusMode, false, false);
   elements.dashboard.dataset.flipStyle = settings.flipStyle;
   elements.dashboard.dataset.layout = settings.layout;
   elements.dashboard.dataset.clockPosition = settings.clockPosition;
@@ -354,7 +457,25 @@ function applySettings() {
   if (state.weather) renderWeather(state.weather);
   if (state.calendar) renderCalendar(state.calendar);
   syncSettingsPanel();
+  scheduleFocusRotation();
+  scheduleWeatherRefresh();
   updateClock();
+}
+
+function scheduleWeatherRefresh() {
+  clearInterval(state.weatherTimer);
+  state.weatherTimer = null;
+  if (!state.settings) return;
+  state.weatherTimer = setInterval(refreshData, state.settings.weatherRefreshMinutes * 60_000);
+}
+
+function revealFocusControls() {
+  if (!state.settings || state.settings.displayStyle !== 'focus' || state.sleepActive) return;
+  elements.dashboard.classList.add('focus-controls-visible');
+  clearTimeout(state.focusControlsTimer);
+  state.focusControlsTimer = setTimeout(() => {
+    if (elements.settingsPanel.hidden) elements.dashboard.classList.remove('focus-controls-visible');
+  }, 4_500);
 }
 
 function flipDigit(element, nextValue, animate) {
@@ -488,21 +609,35 @@ function updateDimming(hour) {
   elements.dashboard.classList.toggle('dimmed', !state.sleepActive && isDimTime && dimLevel < 1);
 }
 
+function formatSolarTime(value) {
+  const match = String(value || '').match(/T(\d{2}:\d{2})/);
+  return match ? match[1] : '--:--';
+}
+
 function renderWeather(data) {
   const current = data.current;
+  const isDay = current.is_day === true || Number(current.is_day) === 1;
   const temperatureUnit = data.currentUnits?.temperature_2m || '°';
   const degree = temperatureUnit.includes('°') ? temperatureUnit : `°${temperatureUnit}`;
   elements.location.textContent = data.locationName;
-  elements.currentIcon.innerHTML = weatherIcon(current.weather_code, Boolean(current.is_day));
+  elements.dashboard.dataset.weatherPeriod = isDay ? 'day' : 'night';
+  elements.currentIcon.innerHTML = weatherIcon(current.weather_code, isDay);
   elements.temperature.textContent = `${Math.round(current.temperature_2m)}°`;
   elements.condition.textContent = t(weatherLabelKeys[current.weather_code] || 'currentConditions');
   elements.feels.textContent = `${t('feels')} ${Math.round(current.apparent_temperature)}${degree} · ${t('humidity')} ${current.relative_humidity_2m}% · ${t('wind')} ${Math.round(current.wind_speed_10m)} ${data.currentUnits?.wind_speed_10m || ''}`;
 
   const todayHigh = data.daily?.temperature_2m_max?.[0];
   const todayLow = data.daily?.temperature_2m_min?.[0];
+  const todayRain = data.daily?.precipitation_probability_max?.[0];
   elements.temperatureRange.textContent = Number.isFinite(todayHigh) && Number.isFinite(todayLow)
     ? `${t('high')} ${Math.round(todayHigh)}° · ${t('low')} ${Math.round(todayLow)}°`
     : '';
+  elements.focusSunrise.textContent = formatSolarTime(data.daily?.sunrise?.[0]);
+  elements.focusSunset.textContent = formatSolarTime(data.daily?.sunset?.[0]);
+  elements.focusPrecipitation.textContent = Number.isFinite(todayRain) ? `${Math.round(todayRain)}%` : '--%';
+  elements.focusLowHigh.textContent = Number.isFinite(todayLow) && Number.isFinite(todayHigh)
+    ? `${Math.round(todayLow)}° / ${Math.round(todayHigh)}°`
+    : '--° / --°';
 
   const days = data.daily?.time || [];
   elements.forecast.innerHTML = days.map((date, index) => {
@@ -621,14 +756,22 @@ function setStatus(message, isError = false) {
 }
 
 async function refreshData() {
+  clearTimeout(state.weatherAnimationTimer);
+  elements.dashboard.classList.remove('weather-updated');
+  elements.dashboard.classList.add('weather-refreshing');
   const [weatherResult, calendarResult] = await Promise.allSettled([
     getJson(weatherApiUrl()),
     getJson(calendarApiUrl())
   ]);
+  elements.dashboard.classList.remove('weather-refreshing');
   if (weatherResult.status === 'fulfilled') {
     state.weather = weatherResult.value;
     renderWeather(weatherResult.value);
     elements.offline.hidden = true;
+    elements.dashboard.classList.add('weather-updated');
+    state.weatherAnimationTimer = setTimeout(() => {
+      elements.dashboard.classList.remove('weather-updated');
+    }, 1_100);
   } else {
     elements.offline.hidden = false;
     setStatus(localizeApiError(weatherResult.reason.message), true);
@@ -660,11 +803,13 @@ function openSettings() {
   setStatus('');
   elements.settingsPanel.hidden = false;
   elements.settingsBackdrop.hidden = false;
+  revealFocusControls();
 }
 
 function closeSettings() {
   elements.settingsPanel.hidden = true;
   elements.settingsBackdrop.hidden = true;
+  revealFocusControls();
 }
 
 async function enterKiosk() {
@@ -763,6 +908,11 @@ function wireChoiceButtons() {
     state.settings.displayStyle = button.dataset.displayStyle;
     applySettings();
   }));
+  document.querySelectorAll('[data-focus-mode]').forEach((button) => button.addEventListener('click', () => {
+    state.settings.focusMode = button.dataset.focusMode;
+    setFocusMode(state.settings.focusMode);
+    syncSettingsPanel();
+  }));
   document.querySelectorAll('[data-language]').forEach((button) => button.addEventListener('click', () => {
     state.settings.language = button.dataset.language;
     applySettings();
@@ -787,6 +937,11 @@ function wireChoiceButtons() {
     state.settings.clockPosition = button.dataset.position;
     applySettings();
   }));
+  document.querySelectorAll('[data-weather-refresh]').forEach((button) => button.addEventListener('click', () => {
+    state.settings.weatherRefreshMinutes = Number(button.dataset.weatherRefresh);
+    syncSettingsPanel();
+    scheduleWeatherRefresh();
+  }));
   document.querySelectorAll('[data-sleep-day]').forEach((button) => button.addEventListener('click', () => {
     const day = Number(button.dataset.sleepDay);
     state.settings.sleepDays = state.settings.sleepDays.includes(day)
@@ -799,6 +954,17 @@ function wireChoiceButtons() {
 
 function wireControls() {
   wireChoiceButtons();
+  document.querySelectorAll('[data-focus-control]').forEach((button) => button.addEventListener('click', async () => {
+    revealFocusControls();
+    state.settings.focusMode = button.dataset.focusControl;
+    setFocusMode(state.settings.focusMode);
+    syncSettingsPanel();
+    try {
+      await persistSharedSettings();
+    } catch (error) {
+      setStatus(localizeApiError(error.message), true);
+    }
+  }));
   elements.settingSeconds.addEventListener('change', () => { state.settings.showSeconds = elements.settingSeconds.checked; applySettings(); });
   elements.settingBlinkSeparator.addEventListener('change', () => { state.settings.blinkSeparator = elements.settingBlinkSeparator.checked; applySettings(); });
   elements.settingDate.addEventListener('change', () => { state.settings.showDate = elements.settingDate.checked; applySettings(); });
@@ -829,6 +995,15 @@ function wireControls() {
     state.settings.sleepShowSeconds = elements.sleepSeconds.checked;
     syncClockPresentation();
     updateClock();
+  });
+  elements.focusAuto.addEventListener('change', () => {
+    state.settings.focusAutoRotate = elements.focusAuto.checked;
+    scheduleFocusRotation();
+  });
+  elements.focusInterval.addEventListener('input', () => {
+    state.settings.focusRotateMinutes = Number(elements.focusInterval.value);
+    elements.focusIntervalOutput.textContent = `${state.settings.focusRotateMinutes} min`;
+    scheduleFocusRotation();
   });
   elements.previewSleep.addEventListener('click', () => {
     state.sleepPreviewUntil = Date.now() + 15_000;
@@ -871,8 +1046,11 @@ function wireControls() {
     if (document.fullscreenElement) document.exitFullscreen();
   });
   elements.dashboard.addEventListener('pointerdown', (event) => {
+    revealFocusControls();
     if (state.sleepActive && !event.target.closest('button')) wakeSleepControls();
   }, { passive: true });
+  elements.dashboard.addEventListener('pointermove', revealFocusControls, { passive: true });
+  document.addEventListener('keydown', revealFocusControls);
   document.addEventListener('fullscreenchange', () => {
     elements.dashboard.classList.toggle('kiosk', Boolean(document.fullscreenElement));
   });
@@ -895,13 +1073,13 @@ async function init() {
   localStorage.removeItem(LEGACY_STORAGE_KEY);
   wireControls();
   applySettings();
+  revealFocusControls();
   applyBurnInShift();
   await refreshData();
   updateClock();
   setInterval(updateClock, 250);
   setInterval(applyBurnInShift, 60_000);
   setInterval(syncSharedSettings, 5_000);
-  setInterval(refreshData, 10 * 60 * 1000);
 }
 
 document.addEventListener('visibilitychange', () => {
