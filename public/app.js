@@ -21,6 +21,7 @@ const state = {
   focusControlsTimer: null,
   weatherTimer: null,
   weatherAnimationTimer: null,
+  oledTimer: null,
   settingsRevision: 0,
   settingsSyncing: false
 };
@@ -77,6 +78,8 @@ const elements = {
   weatherMode: document.querySelector('#weather-mode'),
   weatherCity: document.querySelector('#weather-city'),
   calendarUrl: document.querySelector('#calendar-url'),
+  calendarMaxEvents: document.querySelector('#setting-calendar-events'),
+  calendarMaxEventsOutput: document.querySelector('#calendar-events-output'),
   saveSettings: document.querySelector('#save-settings'),
   resetSettings: document.querySelector('#reset-settings'),
   kioskButton: document.querySelector('#kiosk-button')
@@ -89,22 +92,22 @@ const messages = {
     focusRotation: 'Focus rotation', startsWith: 'Starts with', focusClock: 'Clock', focusWeather: 'Weather', focusCalendar: 'Calendar', autoRotate: 'Automatic rotation', autoRotateHelp: 'Cycle through clock, weather, and calendar', rotationInterval: 'Rotation interval', rotationManual: 'Manual', rotationEvery: 'Every {minutes} min', focusPanel: 'Focus panel',
     language: 'Language', theme: 'Styles', dark: 'Dark', light: 'Light', midnight: 'Midnight', sand: 'Sand',
     typography: 'Display font', fontModern: 'Modern', fontCondensed: 'Condensed', fontRoboto: 'Roboto', fontMono: 'Monospace', fontHelp: 'Applies to the clock digits, labels, weather, date, calendar, and settings.',
-    clockFace: 'Clock face', splitCards: 'Split cards', twinDark: 'Slate cards', twinLight: 'Ivory panels', mechanical: 'Mechanical', minimal: 'Minimal',
+    clockFace: 'Clock face', focusCards: 'Focus cards', splitCards: 'Split cards', twinDark: 'Slate cards', twinLight: 'Ivory panels', mechanical: 'Mechanical', minimal: 'Minimal',
     clockFaceHelp: 'Each face changes the cards, divider, shadows, and number treatment.',
     showSeconds: 'Show seconds', showSecondsHelp: 'Show animated seconds in the clock corner', blinkSeparator: 'Blinking separator', blinkSeparatorHelp: 'Blink only when seconds are hidden; stay steady when seconds are shown',
     showDate: 'Show date & day', showDateHelp: 'Display the date under the clock', clockLayout: 'Clock layout', layout: 'Layout', auto: 'Auto', horizontal: 'Horizontal', vertical: 'Vertical',
     position: 'Position', center: 'Center', top: 'Top', fill: 'Fill space', fillHelp: 'Expand the clock to use all available width and height above the weather.', size: 'Size', cornerRadius: 'Corner radius',
     sleepSchedule: 'Sleep schedule', sleepEnabled: 'Enable sleep mode', sleepEnabledHelp: 'Show only a dimmed clock during the selected hours', sleepStart: 'Starts', sleepEnd: 'Ends', sleepDays: 'Active days',
-    sleepBrightness: 'Sleep brightness', sleepSeconds: 'Seconds during sleep', sleepSecondsHelp: 'Keep compact seconds visible in the clock corner', sleepHelp: 'The schedule follows the dashboard timezone. Tap the sleeping clock once to reveal controls temporarily.', previewSleep: 'Preview for 15 seconds',
+    sleepBrightness: 'Sleep brightness', sleepSeconds: 'Seconds during sleep', sleepSecondsHelp: 'Keep compact seconds visible in the clock corner', sleepHelp: 'The schedule follows the dashboard timezone. Tap the sleeping clock once to reveal controls temporarily.', previewSleep: 'Preview for 15 seconds', oledProtection: 'OLED protection', pixelShiftStrength: 'Pixel shifting strength', off: 'Off', lowStrength: 'Low', mediumStrength: 'Medium', highStrength: 'High', pixelShiftInterval: 'Shift interval', oledProtectionHelp: 'Moves the entire dashboard by a few pixels at the selected interval to reduce static OLED wear.',
     mondayShort: 'M', tuesdayShort: 'T', wednesdayShort: 'W', thursdayShort: 'T', fridayShort: 'F', saturdayShort: 'S', sundayShort: 'S', weatherLocation: 'Weather location', locationSource: 'Location source',
     cityName: 'City name', deviceLocation: 'Device location', city: 'City', cityPlaceholder: 'e.g. Timisoara, Romania',
     locationHelp: 'Device location needs browser permission and usually HTTPS on a LAN. Location names © OpenStreetMap contributors.', weatherRefresh: 'Weather refresh', weatherRefreshHelp: 'How often every connected display requests fresh weather data.', calendar: 'Calendar', publicCalendarUrl: 'Public iCal / ICS URL',
-    calendarHelp: 'Leave blank to use the Docker-mounted calendar file or configured URL.', reset: 'Reset', enterKiosk: 'Enter kiosk', apply: 'Apply', upNext: 'UP NEXT',
+    calendarHelp: 'Leave blank to use the Docker-mounted calendar file or configured URL.', calendarEvents: 'Events displayed', calendarEventsHelp: 'Show between 1 and 7 upcoming events on every display.', reset: 'Reset', enterKiosk: 'Enter kiosk', apply: 'Apply', upNext: 'UP NEXT', nextEvents: 'NEXT EVENTS',
     timeAndDate: 'Time and date', currentWeather: 'Current weather', fiveDayForecast: 'Five day forecast', upcomingEvents: 'Upcoming calendar events', displayControls: 'Display controls',
     switchTheme: 'Switch light or dark mode', lightDarkMode: 'Light / dark mode', enableSleep: 'Enter sleep mode now', disableSleep: 'Exit sleep mode', openSettings: 'Open settings', closeSettings: 'Close settings', enterFullscreen: 'Enter fullscreen',
     fullscreenKiosk: 'Fullscreen / kiosk mode', dashboardSettings: 'Dashboard settings', offline: 'OFFLINE · SHOWING LAST UPDATE', loadingWeather: 'Loading weather', updating: 'Updating…',
     currentConditions: 'Current conditions', feels: 'Feels', humidity: 'Humidity', wind: 'Wind', high: 'High', low: 'Low', today: 'Today', tomorrow: 'Tomorrow', allDay: 'All day', weatherDetails: 'Weather details', sunrise: 'Sunrise', sunset: 'Sunset', precipitation: 'Precipitation', lowHigh: 'Low / High',
-    nextSevenDays: 'Next 7 days', nothingScheduled: 'Nothing scheduled', currentLocation: 'Current location', settingsSaved: 'Saved on the server and synchronized to all displays.', loadingSettings: 'Saving shared settings…',
+    nextSevenDays: 'Next 7 days', nothingScheduled: 'Nothing scheduled', countdownDays: 'days', countdownHours: 'hours', countdownNow: 'now', currentLocation: 'Current location', settingsSaved: 'Saved on the server and synchronized to all displays.', loadingSettings: 'Saving shared settings…',
     defaultsRestored: 'Defaults restored.', requestingLocation: 'Requesting device location…', calendarUrlError: 'Calendar URL must begin with https:// or http://', cityRequired: 'Enter a city name for weather.', sleepTimeError: 'Choose a valid start and end time.',
     fullscreenUnavailable: 'Fullscreen is not supported by this browser. Use its kiosk/fullscreen option instead.', locationUnavailable: 'This browser does not provide device location',
     locationDenied: 'Location permission was unavailable. Use a city name or HTTPS.',
@@ -120,22 +123,22 @@ const messages = {
     focusRotation: 'Rotație Focus', startsWith: 'Începe cu', focusClock: 'Ceas', focusWeather: 'Vreme', focusCalendar: 'Calendar', autoRotate: 'Rotație automată', autoRotateHelp: 'Comută între ceas, vreme și calendar', rotationInterval: 'Interval rotație', rotationManual: 'Manual', rotationEvery: 'La {minutes} min', focusPanel: 'Panou Focus',
     language: 'Limbă', theme: 'Stiluri', dark: 'Întunecat', light: 'Luminos', midnight: 'Noapte', sand: 'Nisip',
     typography: 'Font de afișare', fontModern: 'Modern', fontCondensed: 'Îngust', fontRoboto: 'Roboto', fontMono: 'Monospațiat', fontHelp: 'Se aplică cifrelor ceasului, etichetelor, vremii, datei, calendarului și setărilor.',
-    clockFace: 'Aspectul ceasului', splitCards: 'Cartele separate', twinDark: 'Panouri grafit', twinLight: 'Panouri fildeș', mechanical: 'Mecanic', minimal: 'Minimal',
+    clockFace: 'Aspectul ceasului', focusCards: 'Panouri Focus', splitCards: 'Cartele separate', twinDark: 'Panouri grafit', twinLight: 'Panouri fildeș', mechanical: 'Mecanic', minimal: 'Minimal',
     clockFaceHelp: 'Fiecare aspect schimbă panourile, separatorul, umbrele și stilul cifrelor.',
     showSeconds: 'Afișează secundele', showSecondsHelp: 'Afișează secundele animate în colțul ceasului', blinkSeparator: 'Puncte intermitente', blinkSeparatorHelp: 'Clipesc numai când secundele sunt ascunse; rămân fixe când secundele sunt afișate',
     showDate: 'Afișează data și ziua', showDateHelp: 'Arată data sub ceas', clockLayout: 'Aranjarea ceasului', layout: 'Aranjare', auto: 'Automat', horizontal: 'Orizontal', vertical: 'Vertical',
     position: 'Poziție', center: 'Centru', top: 'Sus', fill: 'Umple spațiul', fillHelp: 'Extinde ceasul pe toată lățimea și înălțimea disponibilă deasupra zonei meteo.', size: 'Mărime', cornerRadius: 'Rotunjire colțuri',
     sleepSchedule: 'Program de somn', sleepEnabled: 'Activează modul de somn', sleepEnabledHelp: 'Afișează numai ceasul estompat în orele selectate', sleepStart: 'Începe', sleepEnd: 'Se termină', sleepDays: 'Zile active',
-    sleepBrightness: 'Luminozitate în somn', sleepSeconds: 'Secunde în timpul somnului', sleepSecondsHelp: 'Păstrează secundele compacte în colțul ceasului', sleepHelp: 'Programul urmează fusul orar al tabloului. Atinge o dată ceasul în repaus pentru a afișa temporar comenzile.', previewSleep: 'Previzualizare 15 secunde',
+    sleepBrightness: 'Luminozitate în somn', sleepSeconds: 'Secunde în timpul somnului', sleepSecondsHelp: 'Păstrează secundele compacte în colțul ceasului', sleepHelp: 'Programul urmează fusul orar al tabloului. Atinge o dată ceasul în repaus pentru a afișa temporar comenzile.', previewSleep: 'Previzualizare 15 secunde', oledProtection: 'Protecție OLED', pixelShiftStrength: 'Intensitate deplasare pixeli', off: 'Oprit', lowStrength: 'Redusă', mediumStrength: 'Medie', highStrength: 'Ridicată', pixelShiftInterval: 'Interval deplasare', oledProtectionHelp: 'Deplasează întregul tablou cu câțiva pixeli la intervalul ales pentru a reduce uzura statică OLED.',
     mondayShort: 'L', tuesdayShort: 'M', wednesdayShort: 'M', thursdayShort: 'J', fridayShort: 'V', saturdayShort: 'S', sundayShort: 'D', weatherLocation: 'Locația meteo', locationSource: 'Sursa locației',
     cityName: 'Numele orașului', deviceLocation: 'Locația dispozitivului', city: 'Oraș', cityPlaceholder: 'ex. Timișoara, România',
     locationHelp: 'Locația dispozitivului necesită permisiunea browserului și, de obicei, HTTPS în rețeaua locală. Denumirile locațiilor © colaboratorii OpenStreetMap.', weatherRefresh: 'Actualizare vreme', weatherRefreshHelp: 'Cât de des solicită fiecare ecran conectat date meteo noi.', calendar: 'Calendar', publicCalendarUrl: 'Adresă publică iCal / ICS',
-    calendarHelp: 'Lasă necompletat pentru fișierul calendar montat în Docker sau adresa configurată.', reset: 'Resetează', enterKiosk: 'Mod chioșc', apply: 'Aplică', upNext: 'URMEAZĂ',
+    calendarHelp: 'Lasă necompletat pentru fișierul calendar montat în Docker sau adresa configurată.', calendarEvents: 'Evenimente afișate', calendarEventsHelp: 'Afișează între 1 și 7 evenimente viitoare pe toate ecranele.', reset: 'Resetează', enterKiosk: 'Mod chioșc', apply: 'Aplică', upNext: 'URMEAZĂ', nextEvents: 'URMĂTOARELE EVENIMENTE',
     timeAndDate: 'Ora și data', currentWeather: 'Vremea actuală', fiveDayForecast: 'Prognoza pe cinci zile', upcomingEvents: 'Evenimente viitoare', displayControls: 'Comenzi afișaj',
     switchTheme: 'Comută modul luminos sau întunecat', lightDarkMode: 'Mod luminos / întunecat', enableSleep: 'Activează acum modul de somn', disableSleep: 'Ieși din modul de somn', openSettings: 'Deschide setările', closeSettings: 'Închide setările', enterFullscreen: 'Intră în ecran complet',
     fullscreenKiosk: 'Ecran complet / mod chioșc', dashboardSettings: 'Setările tabloului', offline: 'OFFLINE · SE AFIȘEAZĂ ULTIMA ACTUALIZARE', loadingWeather: 'Se încarcă vremea', updating: 'Se actualizează…',
     currentConditions: 'Condiții actuale', feels: 'Resimțită', humidity: 'Umiditate', wind: 'Vânt', high: 'Max', low: 'Min', today: 'Astăzi', tomorrow: 'Mâine', allDay: 'Toată ziua', weatherDetails: 'Detalii meteo', sunrise: 'Răsărit', sunset: 'Apus', precipitation: 'Precipitații', lowHigh: 'Min / Max',
-    nextSevenDays: 'Următoarele 7 zile', nothingScheduled: 'Nimic programat', currentLocation: 'Locația curentă', settingsSaved: 'Salvat pe server și sincronizat pe toate ecranele.', loadingSettings: 'Se salvează setările comune…',
+    nextSevenDays: 'Următoarele 7 zile', nothingScheduled: 'Nimic programat', countdownDays: 'zile', countdownHours: 'ore', countdownNow: 'acum', currentLocation: 'Locația curentă', settingsSaved: 'Salvat pe server și sincronizat pe toate ecranele.', loadingSettings: 'Se salvează setările comune…',
     defaultsRestored: 'Setările implicite au fost restaurate.', requestingLocation: 'Se solicită locația dispozitivului…', calendarUrlError: 'Adresa calendarului trebuie să înceapă cu https:// sau http://', cityRequired: 'Introdu un oraș pentru vreme.', sleepTimeError: 'Alege ore valide pentru început și sfârșit.',
     fullscreenUnavailable: 'Ecranul complet nu este acceptat de acest browser. Folosește opțiunea de ecran complet sau chioșc a browserului.', locationUnavailable: 'Acest browser nu oferă locația dispozitivului',
     locationDenied: 'Permisiunea pentru locație nu este disponibilă. Folosește un oraș sau HTTPS.',
@@ -236,8 +239,8 @@ function buildDefaults(config) {
     language: String(config.locale || '').toLowerCase().startsWith('ro') ? 'ro' : 'en',
     theme: 'dark',
     fontFamily: 'roboto',
-    flipStyle: 'standard',
-    clockStyleVersion: 2,
+    flipStyle: 'focus-cards',
+    clockStyleVersion: 3,
     timeFormat: '24',
     showSeconds: Boolean(config.showSeconds),
     blinkSeparator: config.blinkSeparator !== false,
@@ -252,11 +255,14 @@ function buildDefaults(config) {
     sleepDays: Array.isArray(config.sleepDays) ? config.sleepDays : [0, 1, 2, 3, 4, 5, 6],
     sleepDimLevel: Math.round((Number(config.sleepDimLevel) || .2) * 100),
     sleepShowSeconds: Boolean(config.sleepShowSeconds),
+    oledProtection: config.burnInShift === false ? 'off' : 'low',
+    oledShiftInterval: 10,
     weatherMode: 'city',
     weatherCity: config.locationName || 'Timisoara, Romania',
     weatherRefreshMinutes: 30,
     deviceLocation: null,
-    calendarUrl: config.calendarUrl || 'http://better-f1-calendar.vercel.app/api/calendar.ics'
+    calendarUrl: config.calendarUrl || 'http://better-f1-calendar.vercel.app/api/calendar.ics',
+    calendarMaxEvents: 5
   };
 }
 
@@ -271,9 +277,9 @@ function normalizeSettings(raw, defaults) {
   settings.theme = ['dark', 'light', 'midnight', 'sand'].includes(settings.theme) ? settings.theme : defaults.theme;
   if (settings.fontFamily === 'serif') settings.fontFamily = 'roboto';
   settings.fontFamily = ['modern', 'condensed', 'roboto', 'mono'].includes(settings.fontFamily) ? settings.fontFamily : defaults.fontFamily;
-  settings.flipStyle = ['simple', 'standard', 'professional', 'paired-dark', 'paired-light'].includes(settings.flipStyle) ? settings.flipStyle : defaults.flipStyle;
+  settings.flipStyle = ['simple', 'standard', 'professional', 'paired-dark', 'paired-light', 'focus-cards'].includes(settings.flipStyle) ? settings.flipStyle : defaults.flipStyle;
   if (!source.clockStyleVersion && settings.displayStyle === 'classic-weather' && settings.flipStyle === 'standard') settings.flipStyle = 'paired-light';
-  settings.clockStyleVersion = 2;
+  settings.clockStyleVersion = 3;
   settings.timeFormat = '24';
   settings.blinkSeparator = settings.blinkSeparator !== false;
   settings.layout = ['auto', 'horizontal', 'vertical'].includes(settings.layout) ? settings.layout : 'auto';
@@ -287,10 +293,13 @@ function normalizeSettings(raw, defaults) {
     .map(Number).filter((day) => Number.isInteger(day) && day >= 0 && day <= 6))];
   settings.sleepDimLevel = Math.min(100, Math.max(5, Number(settings.sleepDimLevel) || defaults.sleepDimLevel));
   settings.sleepShowSeconds = Boolean(settings.sleepShowSeconds);
+  settings.oledProtection = ['off', 'low', 'medium', 'high'].includes(settings.oledProtection) ? settings.oledProtection : defaults.oledProtection;
+  settings.oledShiftInterval = [2, 5, 10].includes(Number(settings.oledShiftInterval)) ? Number(settings.oledShiftInterval) : defaults.oledShiftInterval;
   settings.weatherMode = settings.weatherMode === 'device' ? 'device' : 'city';
   settings.weatherCity = String(settings.weatherCity || '').slice(0, 100);
   settings.weatherRefreshMinutes = [15, 30, 60].includes(Number(settings.weatherRefreshMinutes)) ? Number(settings.weatherRefreshMinutes) : 30;
   settings.calendarUrl = String(settings.calendarUrl || '').slice(0, 2000);
+  settings.calendarMaxEvents = Math.min(7, Math.max(1, Math.round(Number(settings.calendarMaxEvents) || defaults.calendarMaxEvents)));
   settings.showSeconds = Boolean(settings.showSeconds);
   settings.showDate = settings.showDate !== false;
   if (!settings.deviceLocation || !Number.isFinite(Number(settings.deviceLocation.latitude)) || !Number.isFinite(Number(settings.deviceLocation.longitude))) {
@@ -322,6 +331,8 @@ function syncSettingsPanel() {
   markActive('[data-layout]', 'layout', settings.layout);
   markActive('[data-position]', 'position', settings.clockPosition);
   markActive('[data-weather-refresh]', 'weatherRefresh', String(settings.weatherRefreshMinutes));
+  markActive('button[data-oled-protection]', 'oledProtection', settings.oledProtection);
+  markActive('button[data-oled-shift-interval]', 'oledShiftInterval', String(settings.oledShiftInterval));
   elements.settingSeconds.checked = settings.showSeconds;
   elements.settingBlinkSeparator.checked = settings.blinkSeparator;
   elements.settingDate.checked = settings.showDate;
@@ -347,6 +358,8 @@ function syncSettingsPanel() {
   elements.weatherMode.value = settings.weatherMode;
   elements.weatherCity.value = settings.weatherCity;
   elements.calendarUrl.value = settings.calendarUrl;
+  elements.calendarMaxEvents.value = settings.calendarMaxEvents;
+  elements.calendarMaxEventsOutput.textContent = String(settings.calendarMaxEvents);
   document.querySelectorAll('.city-field').forEach((field) => { field.hidden = settings.weatherMode !== 'city'; });
   syncSleepToggle();
 }
@@ -442,12 +455,15 @@ function applySettings() {
   document.documentElement.dataset.font = settings.fontFamily;
   translateDocument();
   elements.dashboard.dataset.displayStyle = settings.displayStyle;
-  elements.agendaLabel.textContent = settings.displayStyle === 'focus' ? t('focusCalendar') : t('upNext');
+  elements.agendaLabel.textContent = t('nextEvents');
   state.focusMode = settings.focusMode;
   setFocusMode(state.focusMode, false, false);
   elements.dashboard.dataset.flipStyle = settings.flipStyle;
   elements.dashboard.dataset.layout = settings.layout;
   elements.dashboard.dataset.clockPosition = settings.clockPosition;
+  elements.dashboard.dataset.calendarCount = String(settings.calendarMaxEvents);
+  elements.dashboard.style.setProperty('--calendar-count', settings.calendarMaxEvents);
+  elements.dashboard.style.setProperty('--calendar-rows', Math.ceil(settings.calendarMaxEvents / 2));
   elements.dashboard.style.setProperty('--clock-scale', settings.clockPosition === 'fill' ? 1 : settings.clockSize / 100);
   elements.dashboard.style.setProperty('--clock-radius', `${settings.cornerRadius}px`);
   elements.dashboard.style.setProperty('--sleep-dim-level', settings.sleepDimLevel / 100);
@@ -459,6 +475,7 @@ function applySettings() {
   syncSettingsPanel();
   scheduleFocusRotation();
   scheduleWeatherRefresh();
+  scheduleOledProtection();
   updateClock();
 }
 
@@ -665,6 +682,17 @@ function relativeDay(date) {
   return new Intl.DateTimeFormat(currentLocale(), { weekday: 'short', day: 'numeric' }).format(date);
 }
 
+function countdownParts(date) {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const eventDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const calendarDays = Math.round((eventDay - today) / (24 * 60 * 60 * 1000));
+  if (calendarDays > 0) return { value: calendarDays, label: t('countdownDays') };
+  const difference = date.getTime() - now.getTime();
+  if (difference <= 60_000) return { value: '', label: t('countdownNow') };
+  return { value: Math.max(1, Math.ceil(difference / (60 * 60 * 1000))), label: t('countdownHours') };
+}
+
 function renderCalendar(data) {
   if (!data.enabled) {
     elements.agendaRegion.hidden = true;
@@ -674,13 +702,20 @@ function renderCalendar(data) {
   elements.agendaRegion.hidden = false;
   elements.dashboard.classList.add('has-agenda');
   if (!data.events.length) {
-    elements.agenda.innerHTML = `<div class="event"><div class="event-time">${escapeHtml(t('nextSevenDays'))}</div><div class="event-title">${escapeHtml(t('nothingScheduled'))}</div></div>`;
+    elements.agenda.innerHTML = `<div class="event empty-event"><div class="event-copy"><div class="event-time">${escapeHtml(t('nextEvents'))}</div><div class="event-title">${escapeHtml(t('nothingScheduled'))}</div></div></div>`;
     return;
   }
-  elements.agenda.innerHTML = data.events.map((event) => {
+  elements.agenda.innerHTML = data.events.slice(0, state.settings.calendarMaxEvents).map((event, index) => {
     const start = new Date(event.start);
     const time = event.allDay ? t('allDay') : new Intl.DateTimeFormat(currentLocale(), { hour: '2-digit', minute: '2-digit' }).format(start);
-    return `<div class="event"><div class="event-time">${escapeHtml(relativeDay(start))} · ${escapeHtml(time)}</div><div class="event-title">${escapeHtml(event.title)}</div></div>`;
+    const day = new Intl.DateTimeFormat(currentLocale(), { day: '2-digit' }).format(start);
+    const month = new Intl.DateTimeFormat(currentLocale(), { month: 'short' }).format(start).replace('.', '').toUpperCase();
+    const countdown = countdownParts(start);
+    return `<div class="event${index === 0 ? ' next-event' : ''}">
+      <time class="event-date" datetime="${escapeHtml(event.start)}"><b>${escapeHtml(day)}</b><span>${escapeHtml(month)}</span></time>
+      <div class="event-copy"><div class="event-title">${escapeHtml(event.title)}</div><div class="event-time">${escapeHtml(relativeDay(start))} · ${escapeHtml(time)}</div></div>
+      <div class="event-countdown"><b>${escapeHtml(countdown.value)}</b><span>${escapeHtml(countdown.label)}</span></div>
+    </div>`;
   }).join('');
 }
 
@@ -789,12 +824,25 @@ async function refreshData() {
 }
 
 function applyBurnInShift() {
-  if (!state.config?.burnInShift) return;
-  const sequence = [[0, 0], [2, -2], [-2, 2], [3, 2], [-3, -2], [0, 3]];
-  const index = Math.floor(Date.now() / (10 * 60 * 1000)) % sequence.length;
-  const [x, y] = sequence[index];
+  const strength = state.config?.burnInShift === false ? 'off' : state.settings?.oledProtection;
+  const distance = { off: 0, low: 2, medium: 4, high: 6 }[strength] || 0;
+  const sequence = [[0, 0], [1, -1], [-1, 1], [1, 1], [-1, -1], [0, 1], [1, 0], [0, -1], [-1, 0]];
+  const interval = state.settings?.oledShiftInterval || 10;
+  const index = Math.floor(Date.now() / (interval * 60_000)) % sequence.length;
+  const [unitX, unitY] = sequence[index];
+  const x = unitX * distance;
+  const y = unitY * distance;
   elements.dashboard.style.setProperty('--shift-x', `${x}px`);
   elements.dashboard.style.setProperty('--shift-y', `${y}px`);
+  elements.dashboard.dataset.oledProtectionLevel = strength || 'off';
+}
+
+function scheduleOledProtection() {
+  clearInterval(state.oledTimer);
+  state.oledTimer = null;
+  applyBurnInShift();
+  if (!state.settings || state.settings.oledProtection === 'off' || state.config?.burnInShift === false) return;
+  state.oledTimer = setInterval(applyBurnInShift, state.settings.oledShiftInterval * 60_000);
 }
 
 function openSettings() {
@@ -942,6 +990,16 @@ function wireChoiceButtons() {
     syncSettingsPanel();
     scheduleWeatherRefresh();
   }));
+  document.querySelectorAll('button[data-oled-protection]').forEach((button) => button.addEventListener('click', () => {
+    state.settings.oledProtection = button.dataset.oledProtection;
+    syncSettingsPanel();
+    scheduleOledProtection();
+  }));
+  document.querySelectorAll('button[data-oled-shift-interval]').forEach((button) => button.addEventListener('click', () => {
+    state.settings.oledShiftInterval = Number(button.dataset.oledShiftInterval);
+    syncSettingsPanel();
+    scheduleOledProtection();
+  }));
   document.querySelectorAll('[data-sleep-day]').forEach((button) => button.addEventListener('click', () => {
     const day = Number(button.dataset.sleepDay);
     state.settings.sleepDays = state.settings.sleepDays.includes(day)
@@ -970,6 +1028,7 @@ function wireControls() {
   elements.settingDate.addEventListener('change', () => { state.settings.showDate = elements.settingDate.checked; applySettings(); });
   elements.clockSize.addEventListener('input', () => { state.settings.clockSize = Number(elements.clockSize.value); applySettings(); });
   elements.cornerRadius.addEventListener('input', () => { state.settings.cornerRadius = Number(elements.cornerRadius.value); applySettings(); });
+  elements.calendarMaxEvents.addEventListener('input', () => { state.settings.calendarMaxEvents = Number(elements.calendarMaxEvents.value); applySettings(); });
   elements.sleepEnabled.addEventListener('change', () => {
     state.settings.sleepEnabled = elements.sleepEnabled.checked;
     syncSettingsPanel();
@@ -1074,11 +1133,9 @@ async function init() {
   wireControls();
   applySettings();
   revealFocusControls();
-  applyBurnInShift();
   await refreshData();
   updateClock();
   setInterval(updateClock, 250);
-  setInterval(applyBurnInShift, 60_000);
   setInterval(syncSharedSettings, 5_000);
 }
 

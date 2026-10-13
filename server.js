@@ -33,8 +33,8 @@ const config = Object.freeze({
   calendarEnabled: hasCalendarFile || Boolean(DEFAULT_CALENDAR_URL),
   calendarSource: hasCalendarFile ? 'file' : DEFAULT_CALENDAR_URL ? 'url' : null,
   calendarUrl: DEFAULT_CALENDAR_URL,
-  calendarDays: clampInt(process.env.CALENDAR_DAYS, 1, 31, 7),
-  calendarMaxEvents: clampInt(process.env.CALENDAR_MAX_EVENTS, 1, 8, 4),
+  calendarDays: clampInt(process.env.CALENDAR_DAYS, 1, 730, 365),
+  calendarMaxEvents: 7,
   dimStart: clampInt(process.env.DIM_START, 0, 23, 22),
   dimEnd: clampInt(process.env.DIM_END, 0, 23, 7),
   dimLevel: clampNumber(process.env.DIM_LEVEL, 0.25, 1, 0.72),
@@ -110,8 +110,8 @@ const defaultDashboardSettings = Object.freeze({
   language: String(config.locale).toLowerCase().startsWith('ro') ? 'ro' : 'en',
   theme: 'dark',
   fontFamily: 'roboto',
-  flipStyle: 'standard',
-  clockStyleVersion: 2,
+  flipStyle: 'focus-cards',
+  clockStyleVersion: 3,
   timeFormat: config.timeFormat,
   showSeconds: config.showSeconds,
   blinkSeparator: config.blinkSeparator,
@@ -126,11 +126,14 @@ const defaultDashboardSettings = Object.freeze({
   sleepDays: config.sleepDays,
   sleepDimLevel: Math.round(config.sleepDimLevel * 100),
   sleepShowSeconds: config.sleepShowSeconds,
+  oledProtection: config.burnInShift ? 'low' : 'off',
+  oledShiftInterval: 10,
   weatherMode: 'city',
   weatherCity: config.locationName,
   weatherRefreshMinutes: 30,
   deviceLocation: null,
-  calendarUrl: config.calendarUrl
+  calendarUrl: config.calendarUrl,
+  calendarMaxEvents: 5
 });
 
 function normalizeDashboardSettings(raw = {}) {
@@ -144,8 +147,8 @@ function normalizeDashboardSettings(raw = {}) {
   settings.theme = ['dark', 'light', 'midnight', 'sand'].includes(settings.theme) ? settings.theme : defaultDashboardSettings.theme;
   if (settings.fontFamily === 'serif') settings.fontFamily = 'roboto';
   settings.fontFamily = ['modern', 'condensed', 'roboto', 'mono'].includes(settings.fontFamily) ? settings.fontFamily : defaultDashboardSettings.fontFamily;
-  settings.flipStyle = ['simple', 'standard', 'professional', 'paired-dark', 'paired-light'].includes(settings.flipStyle) ? settings.flipStyle : defaultDashboardSettings.flipStyle;
-  settings.clockStyleVersion = 2;
+  settings.flipStyle = ['simple', 'standard', 'professional', 'paired-dark', 'paired-light', 'focus-cards'].includes(settings.flipStyle) ? settings.flipStyle : defaultDashboardSettings.flipStyle;
+  settings.clockStyleVersion = 3;
   settings.timeFormat = '24';
   settings.showSeconds = Boolean(settings.showSeconds);
   settings.blinkSeparator = settings.blinkSeparator !== false;
@@ -162,12 +165,15 @@ function normalizeDashboardSettings(raw = {}) {
     : [...defaultDashboardSettings.sleepDays];
   settings.sleepDimLevel = clampInt(settings.sleepDimLevel, 5, 100, defaultDashboardSettings.sleepDimLevel);
   settings.sleepShowSeconds = Boolean(settings.sleepShowSeconds);
+  settings.oledProtection = ['off', 'low', 'medium', 'high'].includes(settings.oledProtection) ? settings.oledProtection : defaultDashboardSettings.oledProtection;
+  settings.oledShiftInterval = [2, 5, 10].includes(Number(settings.oledShiftInterval)) ? Number(settings.oledShiftInterval) : defaultDashboardSettings.oledShiftInterval;
   settings.weatherMode = settings.weatherMode === 'device' ? 'device' : 'city';
   settings.weatherCity = cleanText(settings.weatherCity || '', 100).trim();
   settings.weatherRefreshMinutes = [15, 30, 60].includes(Number(settings.weatherRefreshMinutes))
     ? Number(settings.weatherRefreshMinutes)
     : defaultDashboardSettings.weatherRefreshMinutes;
   settings.calendarUrl = normalizeCalendarUrl(settings.calendarUrl);
+  settings.calendarMaxEvents = clampInt(settings.calendarMaxEvents, 1, 7, defaultDashboardSettings.calendarMaxEvents);
   const deviceLocation = settings.deviceLocation;
   settings.deviceLocation = deviceLocation && Number.isFinite(Number(deviceLocation.latitude)) && Number.isFinite(Number(deviceLocation.longitude))
     ? {
@@ -200,11 +206,14 @@ function normalizeDashboardSettings(raw = {}) {
     sleepDays: settings.sleepDays,
     sleepDimLevel: settings.sleepDimLevel,
     sleepShowSeconds: settings.sleepShowSeconds,
+    oledProtection: settings.oledProtection,
+    oledShiftInterval: settings.oledShiftInterval,
     weatherMode: settings.weatherMode,
     weatherCity: settings.weatherCity,
     weatherRefreshMinutes: settings.weatherRefreshMinutes,
     deviceLocation: settings.deviceLocation,
-    calendarUrl: settings.calendarUrl
+    calendarUrl: settings.calendarUrl,
+    calendarMaxEvents: settings.calendarMaxEvents
   };
 }
 
@@ -296,7 +305,7 @@ async function reverseGeocodeLocation(latitude, longitude, language = 'en') {
   const data = await fetchJson(url, {
     headers: {
       Accept: 'application/json',
-      'User-Agent': 'ChronoFlip/2.9.8 (https://github.com/romeolazar/chronoflip)'
+      'User-Agent': 'ChronoFlip/2.12.3 (https://github.com/romeolazar/chronoflip)'
     }
   });
   const address = data.address || {};

@@ -261,6 +261,8 @@ body { touch-action: manipulation; }
 
 .clock-separator {
   display: flex;
+  align-self: center;
+  flex: 0 0 auto;
   flex-direction: column;
   gap: clamp(34px, 4.6vw, 66px);
   margin: 0 clamp(2px, .5vw, 9px);
@@ -269,8 +271,8 @@ body { touch-action: manipulation; }
 .dashboard.show-seconds .clock-separator { gap: clamp(25px, 3.2vw, 48px); }
 
 .clock-separator i {
-  width: clamp(10px, 1.1vw, 17px);
-  height: clamp(10px, 1.1vw, 17px);
+  width: clamp(12px, 1.2vw, 19px);
+  height: clamp(12px, 1.2vw, 19px);
   border-radius: 50%;
   background: var(--accent);
   box-shadow: 0 0 24px rgba(226,182,92,.26);
@@ -538,7 +540,7 @@ body { touch-action: manipulation; }
   align-items: center;
   gap: clamp(20px, 3vw, 46px);
   width: 100%;
-  min-height: 76px;
+  min-height: 118px;
   padding-top: clamp(12px, 1.8vh, 20px);
   border-top: 1px solid var(--divider);
 }
@@ -552,13 +554,25 @@ body { touch-action: manipulation; }
 
 .agenda {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: clamp(15px, 2.5vw, 40px);
+  grid-template-columns: repeat(var(--calendar-count, 5), minmax(0, 1fr));
+  gap: clamp(6px, 1vw, 14px);
 }
 
-.event { min-width: 0; }
-.event-time { color: var(--muted); font-size: clamp(11px, 1vw, 15px); }
-.event-title { margin-top: 3px; overflow: hidden; font-size: clamp(14px, 1.3vw, 19px); font-weight: 560; text-overflow: ellipsis; white-space: nowrap; }
+.event { display: grid; min-width: 0; gap: 5px; padding: 7px 9px; border-left: 1px solid var(--divider); }
+.event:first-child { border-left-color: var(--accent); }
+.event-date { display: flex; align-items: baseline; gap: 5px; color: var(--accent); }
+.event-date b { font-size: clamp(15px, 1.35vw, 20px); font-weight: 750; }
+.event-date span { color: var(--muted); font-size: clamp(9px, .7vw, 11px); font-weight: 700; letter-spacing: .06em; }
+.event-copy { min-width: 0; }
+.event-time { overflow: hidden; color: var(--muted); font-size: clamp(9px, .75vw, 12px); text-overflow: ellipsis; white-space: nowrap; }
+.event-title { overflow: hidden; font-size: clamp(12px, 1vw, 16px); font-weight: 650; text-overflow: ellipsis; white-space: nowrap; }
+.event-countdown { display: flex; align-items: baseline; gap: 4px; color: var(--muted); font-size: clamp(9px, .7vw, 11px); text-transform: uppercase; }
+.event-countdown b { color: var(--accent); font-size: clamp(14px, 1.1vw, 18px); font-weight: 750; }
+.empty-event { grid-column: 1 / -1; border-left: 4px solid var(--accent); }
+
+.dashboard:is([data-calendar-count="1"], [data-calendar-count="2"], [data-calendar-count="3"]) .event-title { font-size: clamp(15px, 1.35vw, 22px); }
+.dashboard:is([data-calendar-count="1"], [data-calendar-count="2"], [data-calendar-count="3"]) .event-date b,
+.dashboard:is([data-calendar-count="1"], [data-calendar-count="2"], [data-calendar-count="3"]) .event-countdown b { font-size: clamp(18px, 1.6vw, 25px); }
 
 .screen-controls {
   position: fixed;
@@ -660,6 +674,7 @@ html[data-theme="sand"] .sun-icon { display: none; }
 .choice-grid { display: grid; gap: 8px; }
 .choice-grid.themes { grid-template-columns: repeat(4, 1fr); }
 .choice-grid.three { grid-template-columns: repeat(3, 1fr); }
+.choice-grid.four { grid-template-columns: repeat(4, 1fr); }
 .choice-grid.two { grid-template-columns: repeat(2, 1fr); }
 .choice-grid button,
 .secondary-button,
@@ -724,6 +739,8 @@ html[data-theme="sand"] .sun-icon { display: none; }
 
 .clock-face-preview::before,
 .clock-face-preview::after { content: ""; position: absolute; top: 7px; bottom: 7px; }
+.clock-face-preview.focus-cards::before { left: 8%; width: 18%; border: 1px solid #353229; border-radius: 5px; background: linear-gradient(#21211d 49%, #0c0c0a 50%); box-shadow: 23px 0 #171714, 67px 0 #171714, 90px 0 #171714; }
+.clock-face-preview.focus-cards::after { top: 21px; right: 7%; bottom: auto; left: 7%; height: 1px; background: rgba(255,255,255,.1); }
 .clock-face-preview.split::before { left: 13%; width: 15%; border-radius: 3px; background: linear-gradient(#2a2a2a 49%, #151515 50%); box-shadow: 21px 0 #222, 60px 0 #222, 81px 0 #222; }
 .clock-face-preview.split::after { top: 21px; right: 10%; bottom: auto; left: 10%; height: 1px; background: rgba(255,255,255,.12); }
 .clock-face-preview.paired-dark::before { left: 9%; width: 37%; border-radius: 4px; background: linear-gradient(#292929 49%, #171717 50%); box-shadow: 48px 0 #222; }
@@ -1043,6 +1060,29 @@ html[data-theme="sand"] .sun-icon { display: none; }
 .dashboard[data-display-style="classic-weather"][data-layout="vertical"] .flip-clock { gap: 10px; }
 
 /* Distinct clock faces. Display style controls layout; clock face controls the hardware look. */
+.dashboard[data-display-style][data-flip-style="focus-cards"] .flip-digit,
+.dashboard[data-display-style][data-flip-style="focus-cards"].show-seconds .flip-digit {
+  height: auto;
+  aspect-ratio: .72;
+  overflow: hidden;
+  border: 1px solid #353229;
+  border-radius: clamp(12px, 1.4vw, 23px);
+  background: linear-gradient(180deg, #21211d 0 49.4%, #0c0c0a 50.6% 100%);
+  color: #f1f0eb;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05), 0 7px 0 rgba(0,0,0,.58), 0 20px 45px rgba(0,0,0,.6);
+  font-family: Inter, Roboto, -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif !important;
+  font-weight: 900 !important;
+  letter-spacing: -.045em;
+  text-shadow: 0 2px 0 rgba(0,0,0,.52);
+}
+.dashboard[data-display-style][data-flip-style="focus-cards"] .flip-digit .flap { background: #21211d; }
+.dashboard[data-display-style][data-flip-style="focus-cards"] .flip-digit .flap.new-bottom { background: #0c0c0a; }
+.dashboard[data-display-style][data-flip-style="focus-cards"] .flip-digit::before,
+.dashboard[data-display-style][data-flip-style="focus-cards"] .flip-digit::after { background: #090908; box-shadow: inset 0 0 0 1px rgba(255,255,255,.04); }
+.dashboard[data-display-style][data-flip-style="focus-cards"] .clock-separator i { background: var(--accent); box-shadow: 0 0 18px color-mix(in srgb, var(--accent), transparent 70%); }
+.dashboard[data-display-style="focus"][data-focus-mode="clock"][data-flip-style="focus-cards"] .flip-clock { gap: clamp(8px, 1vw, 14px); }
+.dashboard[data-display-style][data-flip-style="focus-cards"] .flip-clock > .clock-separator { margin-inline: clamp(5px, 1vw, 16px); }
+
 .dashboard[data-display-style="ambient"][data-flip-style^="paired"] .time-group {
   height: clamp(176px, 24vw, 310px);
 }
@@ -1136,7 +1176,7 @@ html[data-theme="sand"] .sun-icon { display: none; }
 .dashboard[data-display-style][data-flip-style="simple"] .flip-digit::after { display: none; }
 .dashboard[data-display-style][data-flip-style="simple"] .flip-digit .flap { background: var(--background); }
 .dashboard[data-display-style][data-flip-style="simple"] .flip-digit .flap.new-bottom { background: var(--background); }
-.dashboard[data-display-style][data-flip-style="simple"] .clock-separator i { width: 8px; height: 8px; background: var(--muted); box-shadow: none; }
+.dashboard[data-display-style][data-flip-style="simple"] .clock-separator i { width: clamp(10px, .9vw, 14px); height: clamp(10px, .9vw, 14px); background: var(--muted); box-shadow: 0 0 0 1px color-mix(in srgb, var(--muted), transparent 55%); }
 
 .dashboard[data-display-style][data-flip-style="professional"] .flip-digit,
 .dashboard[data-display-style][data-flip-style="professional"].show-seconds .flip-digit {
@@ -1466,7 +1506,7 @@ html[data-theme="sand"] .sun-icon { display: none; }
 .dashboard[data-display-style="focus"][data-focus-mode="weather"] .clock-region .clock-separator,
 .dashboard[data-display-style="focus"][data-focus-mode="calendar"] .clock-region .clock-separator { gap: clamp(14px, 1.6vw, 23px); margin-right: 1px; margin-left: 1px; }
 .dashboard[data-display-style="focus"][data-focus-mode="weather"] .clock-region .clock-separator i,
-.dashboard[data-display-style="focus"][data-focus-mode="calendar"] .clock-region .clock-separator i { width: clamp(6px, .55vw, 9px); height: clamp(6px, .55vw, 9px); }
+.dashboard[data-display-style="focus"][data-focus-mode="calendar"] .clock-region .clock-separator i { width: clamp(8px, .65vw, 11px); height: clamp(8px, .65vw, 11px); }
 .dashboard[data-display-style="focus"][data-focus-mode="weather"].show-seconds .clock-region .seconds-group,
 .dashboard[data-display-style="focus"][data-focus-mode="calendar"].show-seconds .clock-region .seconds-group {
   right: -3px;
@@ -1616,21 +1656,57 @@ html[data-theme="sand"] .sun-icon { display: none; }
   border-top: 1px solid color-mix(in srgb, var(--panel-edge), var(--accent) 12%);
 }
 .dashboard[data-display-style="focus"] .section-label { font-size: clamp(12px, 1.1vw, 17px); }
-.dashboard[data-display-style="focus"] .agenda { display: grid; flex: 1 1 auto; grid-template-columns: 1fr; grid-template-rows: repeat(4, minmax(0, 1fr)); gap: 10px; }
-.dashboard[data-display-style="focus"] .event { display: flex; flex-direction: column; justify-content: center; padding: clamp(12px, 1.5vw, 22px); border: 1px solid var(--divider); border-left: 5px solid var(--accent); border-radius: 15px; background: color-mix(in srgb, var(--card-top), transparent 15%); }
-.dashboard[data-display-style="focus"] .event-time { font-size: clamp(14px, 1.3vw, 20px); font-weight: 700; }
-.dashboard[data-display-style="focus"] .event-title { margin-top: 6px; font-size: clamp(19px, 2vw, 31px); font-weight: 720; }
+.dashboard[data-display-style="focus"] .agenda { display: grid; flex: 1 1 auto; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(var(--calendar-rows, 3), minmax(0, 1fr)); gap: 10px; }
+.dashboard[data-display-style="focus"] .event { grid-template-columns: clamp(46px, 4vw, 64px) minmax(0, 1fr) auto; align-items: center; gap: clamp(8px, 1vw, 15px); padding: clamp(10px, 1.2vw, 18px); border: 1px solid var(--divider); border-left: 5px solid transparent; border-radius: 15px; background: color-mix(in srgb, var(--card-top), transparent 15%); }
+.dashboard[data-display-style="focus"] .event.next-event { border-left-color: var(--accent); background: color-mix(in srgb, var(--card-top), var(--accent) 6%); }
+.dashboard[data-display-style="focus"] .event:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.dashboard[data-display-style="focus"] .event-date { display: grid; justify-items: center; gap: 2px; padding-right: 10px; border-right: 1px solid var(--divider); }
+.dashboard[data-display-style="focus"] .event-date b { font-size: clamp(20px, 2vw, 32px); }
+.dashboard[data-display-style="focus"] .event-time { margin-top: 5px; font-size: clamp(11px, 1vw, 15px); }
+.dashboard[data-display-style="focus"] .event-title { font-size: clamp(16px, 1.6vw, 25px); font-weight: 720; }
+.dashboard[data-display-style="focus"] .event-countdown { display: grid; min-width: 54px; justify-items: center; gap: 0; }
+.dashboard[data-display-style="focus"] .event-countdown b { font-size: clamp(20px, 2vw, 31px); }
+
+.dashboard[data-display-style="focus"][data-focus-mode="calendar"]:is([data-calendar-count="1"], [data-calendar-count="2"], [data-calendar-count="3"]) .agenda {
+  grid-template-columns: 1fr;
+  grid-template-rows: repeat(var(--calendar-count), minmax(0, 1fr));
+}
+.dashboard[data-display-style="focus"][data-focus-mode="calendar"]:is([data-calendar-count="1"], [data-calendar-count="2"], [data-calendar-count="3"]) .event {
+  grid-column: auto;
+  grid-template-columns: clamp(68px, 6vw, 92px) minmax(0, 1fr) clamp(62px, 5vw, 82px);
+  padding: clamp(16px, 2vw, 28px);
+}
+.dashboard[data-display-style="focus"][data-focus-mode="calendar"]:is([data-calendar-count="1"], [data-calendar-count="2"], [data-calendar-count="3"]) .event-date b,
+.dashboard[data-display-style="focus"][data-focus-mode="calendar"]:is([data-calendar-count="1"], [data-calendar-count="2"], [data-calendar-count="3"]) .event-countdown b { font-size: clamp(30px, 3vw, 45px); }
+.dashboard[data-display-style="focus"][data-focus-mode="calendar"]:is([data-calendar-count="1"], [data-calendar-count="2"], [data-calendar-count="3"]) .event-title { font-size: clamp(21px, 2.25vw, 34px); white-space: normal; }
+.dashboard[data-display-style="focus"][data-focus-mode="calendar"]:is([data-calendar-count="1"], [data-calendar-count="2"], [data-calendar-count="3"]) .event-time { font-size: clamp(13px, 1.25vw, 18px); }
 
 .dashboard[data-display-style="focus"][data-focus-mode="clock"] .agenda-region,
 .dashboard[data-display-style="focus"][data-focus-mode="weather"] .agenda-region { padding: clamp(14px, 1.7vw, 25px); gap: 10px; }
 .dashboard[data-display-style="focus"][data-focus-mode="clock"] .agenda,
-.dashboard[data-display-style="focus"][data-focus-mode="weather"] .agenda { grid-template-rows: repeat(2, 1fr); }
-.dashboard[data-display-style="focus"][data-focus-mode="clock"] .event:nth-child(n+3),
-.dashboard[data-display-style="focus"][data-focus-mode="weather"] .event:nth-child(n+3) { display: none; }
+.dashboard[data-display-style="focus"][data-focus-mode="weather"] .agenda { grid-template-columns: 1fr; grid-template-rows: repeat(var(--calendar-count, 5), minmax(0, 1fr)); gap: 0; }
+.dashboard[data-display-style="focus"][data-focus-mode="clock"] .event,
+.dashboard[data-display-style="focus"][data-focus-mode="weather"] .event { grid-column: auto !important; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 7px; min-height: 0; padding: 3px 5px; border: 0; border-top: 1px solid var(--divider); border-radius: 0; background: transparent; }
+.dashboard[data-display-style="focus"][data-focus-mode="clock"] .event-date,
+.dashboard[data-display-style="focus"][data-focus-mode="weather"] .event-date { display: block; padding: 0; border: 0; color: var(--muted); font-size: 10px; }
+.dashboard[data-display-style="focus"][data-focus-mode="clock"] .event-date b,
+.dashboard[data-display-style="focus"][data-focus-mode="weather"] .event-date b { margin-right: 3px; font-size: 12px; }
 .dashboard[data-display-style="focus"][data-focus-mode="clock"] .event-title,
-.dashboard[data-display-style="focus"][data-focus-mode="weather"] .event-title { font-size: clamp(15px, 1.35vw, 21px); }
+.dashboard[data-display-style="focus"][data-focus-mode="weather"] .event-title { font-size: clamp(11px, 1vw, 15px); }
 .dashboard[data-display-style="focus"][data-focus-mode="clock"] .event-time,
-.dashboard[data-display-style="focus"][data-focus-mode="weather"] .event-time { font-size: clamp(11px, .95vw, 15px); }
+.dashboard[data-display-style="focus"][data-focus-mode="weather"] .event-time { display: none; }
+.dashboard[data-display-style="focus"][data-focus-mode="clock"] .event-countdown,
+.dashboard[data-display-style="focus"][data-focus-mode="weather"] .event-countdown { display: flex; min-width: 48px; justify-content: flex-end; font-size: 9px; }
+.dashboard[data-display-style="focus"][data-focus-mode="clock"] .event-countdown b,
+.dashboard[data-display-style="focus"][data-focus-mode="weather"] .event-countdown b { font-size: 14px; }
+
+.dashboard[data-display-style="focus"]:is([data-calendar-count="1"], [data-calendar-count="2"], [data-calendar-count="3"]):is([data-focus-mode="clock"], [data-focus-mode="weather"]) .event {
+  grid-template-columns: 58px minmax(0, 1fr) 62px;
+  padding: 7px 6px;
+}
+.dashboard[data-display-style="focus"]:is([data-calendar-count="1"], [data-calendar-count="2"], [data-calendar-count="3"]):is([data-focus-mode="clock"], [data-focus-mode="weather"]) .event-date b,
+.dashboard[data-display-style="focus"]:is([data-calendar-count="1"], [data-calendar-count="2"], [data-calendar-count="3"]):is([data-focus-mode="clock"], [data-focus-mode="weather"]) .event-countdown b { font-size: clamp(16px, 1.4vw, 21px); }
+.dashboard[data-display-style="focus"]:is([data-calendar-count="1"], [data-calendar-count="2"], [data-calendar-count="3"]):is([data-focus-mode="clock"], [data-focus-mode="weather"]) .event-title { font-size: clamp(14px, 1.3vw, 20px); }
 
 .dashboard[data-display-style="focus"] .focus-controls {
   position: fixed;

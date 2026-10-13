@@ -12,7 +12,7 @@
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
     <link rel="manifest" href="/site.webmanifest">
-  <link rel="stylesheet" href="/styles.css?v=2.9.8">
+  <link rel="stylesheet" href="/styles.css?v=2.12.3">
   </head>
   <body>
     <main class="dashboard" id="dashboard">
@@ -74,7 +74,7 @@
       </div>
 
       <section class="agenda-region" id="agenda-region" hidden aria-label="Upcoming calendar events" data-i18n-aria="upcomingEvents">
-        <div class="section-label" data-i18n="upNext">UP NEXT</div>
+        <div class="section-label" data-i18n="nextEvents">NEXT EVENTS</div>
         <div class="agenda" id="agenda"></div>
       </section>
 
@@ -166,6 +166,7 @@
         <section class="settings-section">
           <h3 data-i18n="clockFace">Clock face</h3>
           <div class="choice-grid clock-faces" id="flip-style-options">
+            <button type="button" data-flip-style="focus-cards"><i class="clock-face-preview focus-cards"></i><span data-i18n="focusCards">Focus cards</span></button>
             <button type="button" data-flip-style="standard"><i class="clock-face-preview split"></i><span data-i18n="splitCards">Split cards</span></button>
             <button type="button" data-flip-style="paired-dark"><i class="clock-face-preview paired-dark"></i><span data-i18n="twinDark">Slate cards</span></button>
             <button type="button" data-flip-style="paired-light"><i class="clock-face-preview paired-light"></i><span data-i18n="twinLight">Ivory panels</span></button>
@@ -226,6 +227,24 @@
         </section>
 
         <section class="settings-section">
+          <h3 data-i18n="oledProtection">OLED protection</h3>
+          <label class="field-label" data-i18n="pixelShiftStrength">Pixel shifting strength</label>
+          <div class="choice-grid four" id="oled-protection-options">
+            <button type="button" data-oled-protection="off" data-i18n="off">Off</button>
+            <button type="button" data-oled-protection="low" data-i18n="lowStrength">Low</button>
+            <button type="button" data-oled-protection="medium" data-i18n="mediumStrength">Medium</button>
+            <button type="button" data-oled-protection="high" data-i18n="highStrength">High</button>
+          </div>
+          <label class="field-label" data-i18n="pixelShiftInterval">Shift interval</label>
+          <div class="choice-grid three" id="oled-shift-interval-options">
+            <button type="button" data-oled-shift-interval="2">2 min</button>
+            <button type="button" data-oled-shift-interval="5">5 min</button>
+            <button type="button" data-oled-shift-interval="10">10 min</button>
+          </div>
+          <p class="field-help" data-i18n="oledProtectionHelp">Moves the entire dashboard by a few pixels at the selected interval to reduce static OLED wear.</p>
+        </section>
+
+        <section class="settings-section">
           <h3 data-i18n="weatherLocation">Weather location</h3>
           <label class="field-label" for="weather-mode" data-i18n="locationSource">Location source</label>
           <select class="text-input" id="weather-mode">
@@ -249,6 +268,8 @@
           <label class="field-label" for="calendar-url" data-i18n="publicCalendarUrl">Public iCal / ICS URL</label>
           <input class="text-input" id="calendar-url" type="url" maxlength="2000" placeholder="https://example.com/calendar.ics" autocomplete="off">
           <p class="field-help" data-i18n="calendarHelp">Leave blank to use the Docker-mounted calendar file or configured URL.</p>
+          <label class="range-row"><span><span data-i18n="calendarEvents">Events displayed</span> <output id="calendar-events-output">5</output></span><input id="setting-calendar-events" type="range" min="1" max="7" step="1" value="5"></label>
+          <p class="field-help" data-i18n="calendarEventsHelp">Show between 1 and 7 upcoming events on every display.</p>
         </section>
 
         <p class="settings-status" id="settings-status" role="status"></p>
@@ -261,6 +282,6 @@
       </footer>
     </aside>
 
-  <script src="/app.js?v=2.9.8" defer></script>
+  <script src="/app.js?v=2.12.3" defer></script>
   </body>
 </html>

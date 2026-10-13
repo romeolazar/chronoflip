@@ -61,8 +61,7 @@ All settings are optional and configured with environment variables or `.env`:
 | `FORECAST_DAYS` | `5` | 3–7 days |
 | `CALENDAR_ICS_FILE` | `/data/calendar/calendar.ics` | ICS file inside the container |
 | `CALENDAR_ICS_URL` | Better F1 Calendar URL | Initial public ICS feed URL |
-| `CALENDAR_DAYS` | `7` | Upcoming calendar window |
-| `CALENDAR_MAX_EVENTS` | `4` | Events displayed, 1–8 |
+| `CALENDAR_DAYS` | `365` | Search horizon for upcoming events, 1–730 days |
 | `DIM_START`, `DIM_END` | `22`, `7` | Automatic dimming hours |
 | `DIM_LEVEL` | `0.72` | Night brightness, 0.25–1.0 |
 | `SLEEP_ENABLED` | `false` | Initial clock-only sleep schedule state |
@@ -78,7 +77,8 @@ The settings panel includes the complete display set inspired by A Flip Clock:
 
 - Ambient, Classic Weather, and Focus display themes
 - Focus theme with room-readable Clock, Weather, or Calendar priority modes, manual switching, and automatic 1–10 minute rotation
-- Five visibly different clock faces: Split Cards, Slate Cards, Ivory Panels, Mechanical, and Minimal
+- Next Events calendar view with a server-synchronized 1–7 event selector (five by default), compact date/time details, and a live days/hours countdown in every display theme
+- Six visibly different clock faces, including the mock-up-matched Focus Cards design, Split Cards, Slate Cards, Ivory Panels, Mechanical, and Minimal
 - Dark, Light, Midnight, and Sand themes
 - Modern, Condensed, Roboto, and Monospace display fonts; the selected font also applies to the bold clock digits
 - Fixed 24-hour time, optional compact corner seconds, and an optional blinking hour/minute separator
@@ -102,6 +102,8 @@ Weather refresh can be shared across every connected display at 15, 30, or 60-mi
 Weather icons animate while fresh data is loading, then settle with a short confirmation animation. Reduced-motion preferences disable these effects.
 
 Current-condition icons follow the provider's day/night flag, including clear moon, stars, partly cloudy night, fog, rain, and snow variants.
+
+OLED protection is configurable and synchronized across displays. Pixel shifting can be disabled or set to Low (2 px), Medium (4 px), or High (6 px), with a smooth movement every 2, 5, or 10 minutes.
 
 Fill Space expands the hour and minute cards across all available room above the weather and calendar. When seconds are enabled, they remain animated in a small lower-right corner card instead of consuming a third full-size panel or covering the minute digit. While Fill Space is active, the Size control is held at 100%; its previous value is preserved and returns when Center or Top is selected.
 
