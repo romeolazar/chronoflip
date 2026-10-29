@@ -1855,7 +1855,9 @@ html[data-theme="sand"] .sun-icon { display: none; }
   transition: filter .45s ease, transform 4s ease;
 }
 
-.dashboard.sleep-mode .dashboard-stage { display: none !important; }
+.dashboard.sleep-mode .dashboard-stage,
+.dashboard.sleep-mode .agenda-region,
+.dashboard.sleep-mode .focus-controls { display: none !important; }
 .dashboard.sleep-mode .sleep-ambient {
   position: absolute;
   inset: 0;
