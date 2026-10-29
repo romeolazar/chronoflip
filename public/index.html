@@ -12,10 +12,29 @@
     <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
     <link rel="manifest" href="/site.webmanifest">
-  <link rel="stylesheet" href="/styles.css?v=2.12.13">
+  <link rel="stylesheet" href="/styles.css?v=2.12.16">
   </head>
   <body>
     <main class="dashboard" id="dashboard">
+      <section class="sleep-ambient" id="sleep-ambient" aria-label="Sleep clock and weather display" hidden>
+        <div class="sleep-view sleep-clock-view is-active" id="sleep-clock-view" data-sleep-view="clock" aria-hidden="false">
+          <div class="sleep-clock-time" aria-label="23:07">
+            <span class="sleep-digit-pair"><span id="sleep-hour-tens">2</span><span id="sleep-hour-ones">3</span></span><span class="sleep-clock-colon" aria-hidden="true">:</span><span class="sleep-digit-pair"><span id="sleep-minute-tens">0</span><span id="sleep-minute-ones">7</span></span>
+          </div>
+          <div class="sleep-clock-seconds" id="sleep-clock-seconds" aria-label="42 seconds" hidden>42</div>
+        </div>
+        <div class="sleep-view sleep-weather-view" id="sleep-weather-view" data-sleep-view="weather" aria-hidden="true">
+          <div class="sleep-weather-card">
+            <div class="sleep-weather-head">
+              <div class="sleep-weather-location" id="sleep-weather-location">Timișoara, România</div>
+              <div class="sleep-weather-date" id="sleep-weather-date">Miercuri, 29 octombrie</div>
+            </div>
+            <div class="sleep-weather-temperature" id="sleep-weather-temperature">--°</div>
+            <div class="sleep-weather-icon" id="sleep-weather-icon" aria-hidden="true"></div>
+            <div class="sleep-weather-condition" id="sleep-weather-condition"></div>
+          </div>
+        </div>
+      </section>
       <div class="dashboard-stage">
         <section class="clock-region" aria-label="Time and date" data-i18n-aria="timeAndDate">
         <div class="clock-row">
@@ -282,6 +301,6 @@
       </footer>
     </aside>
 
-  <script src="/app.js?v=2.12.13" defer></script>
+  <script src="/app.js?v=2.12.16" defer></script>
   </body>
 </html>

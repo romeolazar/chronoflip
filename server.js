@@ -305,7 +305,7 @@ async function reverseGeocodeLocation(latitude, longitude, language = 'en') {
   const data = await fetchJson(url, {
     headers: {
       Accept: 'application/json',
-      'User-Agent': 'ChronoFlip/2.12.13 (https://github.com/romeolazar/chronoflip)'
+      'User-Agent': 'ChronoFlip/2.12.16 (https://github.com/romeolazar/chronoflip)'
     }
   });
   const address = data.address || {};

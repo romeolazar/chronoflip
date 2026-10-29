@@ -1841,112 +1841,162 @@ html[data-theme="sand"] .sun-icon { display: none; }
   .dashboard[data-display-style="focus"] .focus-controls { position: fixed; bottom: 8px; }
 }
 
-/* Sleep mode is deliberately independent of the selected daytime layout/theme. */
+/* Sleep uses its own OLED-black clock and weather screens, independent of daytime theme/layout. */
 .dashboard.sleep-mode {
-  display: flex;
-  flex-direction: column;
+  display: block;
   width: 100%;
-  height: 100%;
   height: 100dvh;
   min-height: 0;
-  padding: clamp(14px, 3.5vmin, 72px);
+  padding: 0;
   overflow: hidden;
-  background: var(--background);
+  background: #000 !important;
   opacity: 1;
   filter: brightness(var(--sleep-dim-level, .2));
   transition: filter .45s ease, transform 4s ease;
 }
 
-.dashboard.sleep-mode .dashboard-stage { display: contents; }
-.dashboard.sleep-mode .weather-region,
-.dashboard.sleep-mode .agenda-region,
-.dashboard.sleep-mode .focus-controls,
-.dashboard.sleep-mode .date-line,
-.dashboard.sleep-mode .offline-badge { display: none !important; }
-
-.dashboard.sleep-mode .clock-region,
-.dashboard.sleep-mode[data-display-style="classic-weather"] .clock-region {
-  display: flex;
-  flex: 1 1 0;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 0;
-  margin: 0;
-  padding: 0;
-  opacity: 1;
+.dashboard.sleep-mode .dashboard-stage { display: none !important; }
+.dashboard.sleep-mode .sleep-ambient {
+  position: absolute;
+  inset: 0;
+  display: block;
+  overflow: hidden;
+  background: #000;
 }
-
-.dashboard.sleep-mode .clock-row,
-.dashboard.sleep-mode[data-display-style="classic-weather"] .clock-row {
-  flex: 0 1 auto;
-  align-items: center;
-  width: 100%;
-  height: min(68dvh, 39vw);
-  max-width: none;
-  max-height: 100%;
-  min-height: 0;
-  transform: none;
-}
-
-.dashboard.sleep-mode .flip-clock,
-.dashboard.sleep-mode[data-display-style="classic-weather"] .flip-clock {
-  flex: 0 1 auto;
-  align-items: center;
-  width: 100%;
-  height: 100%;
-  min-height: 0;
-}
-
-.dashboard.sleep-mode .flip-clock > .time-group {
-  align-items: stretch;
-  height: 100%;
-  min-height: 0;
-}
-
-.dashboard.sleep-mode .flip-clock > .time-group > .flip-digit {
-  width: auto;
-  height: 100%;
-  min-height: 0;
-  font-size: min(26vw, 60dvh);
-}
-
-.dashboard.sleep-mode .flip-clock > .clock-separator {
-  align-self: center;
-  flex: 0 0 auto;
-}
-
+.dashboard.sleep-mode .sleep-ambient[hidden] { display: none !important; }
 .dashboard.sleep-mode .screen-controls { opacity: 0; pointer-events: none; }
 .dashboard.sleep-mode.sleep-awake .screen-controls { opacity: 1; pointer-events: auto; }
 .dashboard.sleep-mode.sleep-awake { filter: brightness(1); }
 
+.sleep-view {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(10px) scale(.99);
+  transition: opacity 1.2s ease, transform 1.2s ease, visibility 1.2s;
+}
+.sleep-view.is-active { opacity: 1; visibility: visible; transform: none; }
+.sleep-clock-view { place-items: center; container-type: size; background: #000; }
+.sleep-clock-time {
+  display: grid;
+  grid-template-columns: 1fr .14fr 1fr;
+  align-items: center;
+  width: 92%;
+  color: #f7f7f8;
+  font-family: var(--ui-font);
+  font-size: min(35vw, 74vh);
+  font-size: min(35cqw, 74cqh);
+  font-weight: 700;
+  line-height: .92;
+  letter-spacing: -.075em;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  white-space: nowrap;
+}
+.sleep-digit-pair { display: grid; grid-template-columns: 1fr 1fr; justify-items: center; min-width: 0; }
+.sleep-clock-colon { align-self: center; color: var(--accent); font-size: .8em; font-weight: 500; line-height: .8; transform: translateY(-.06em); }
+.sleep-clock-seconds {
+  position: absolute;
+  right: 6%;
+  bottom: 7%;
+  color: #aaaab3;
+  font-family: var(--ui-font);
+  font-size: clamp(24px, 4.2vw, 54px);
+  font-size: clamp(24px, 4.2cqw, 54px);
+  font-weight: 500;
+  letter-spacing: .12em;
+  font-variant-numeric: tabular-nums;
+}
+.sleep-clock-seconds[hidden] { display: none !important; }
+
+.sleep-weather-view { padding: clamp(12px, 2.2vmin, 28px); container-type: size; }
+.sleep-weather-card {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 310px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: clamp(24px, 3vmin, 44px);
+  background:
+    radial-gradient(ellipse at 21% 87%, rgba(63,98,151,.23), transparent 39%),
+    radial-gradient(ellipse at 82% 16%, rgba(74,66,116,.19), transparent 36%),
+    linear-gradient(155deg, #17171e 0%, #0b0b11 53%, #030305 100%);
+  box-shadow: inset 0 1px rgba(255,255,255,.06), 0 25px 70px rgba(0,0,0,.48);
+  container-type: size;
+}
+.sleep-weather-head { position: absolute; z-index: 2; top: 8%; left: 7%; display: grid; gap: clamp(5px, .8cqw, 11px); max-width: 52%; }
+.sleep-weather-location { color: #f4f4f7; font-size: clamp(18px, 2.7vw, 34px); font-size: clamp(18px, 2.7cqw, 34px); font-weight: 700; line-height: 1.1; letter-spacing: .01em; }
+.sleep-weather-date { color: #b7b7c1; font-size: clamp(14px, 1.8vw, 23px); font-size: clamp(14px, 1.8cqw, 23px); font-weight: 500; line-height: 1.15; }
+.sleep-weather-temperature {
+  position: absolute;
+  top: 21%;
+  right: 8%;
+  color: #fafafd;
+  font-family: var(--ui-font);
+  font-size: min(47vw, 58vh);
+  font-size: min(47cqw, 58cqh);
+  font-weight: 700;
+  line-height: .82;
+  letter-spacing: -.09em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  text-shadow: 0 8px 32px rgba(0,0,0,.24);
+}
+.sleep-weather-icon {
+  position: absolute;
+  left: 6%;
+  bottom: 28%;
+  width: min(48vw, 55vh);
+  height: min(48vw, 55vh);
+  width: min(48cqw, 55cqh);
+  height: min(48cqw, 55cqh);
+  color: var(--accent);
+  filter: drop-shadow(0 22px 28px rgba(0,0,0,.38));
+}
+.sleep-weather-icon svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.sleep-weather-icon .sun { fill: var(--accent); }
+.sleep-weather-icon .cloud { fill: #e3e9f2; }
+.sleep-weather-icon .moon { fill: #e7e7ee; }
+.sleep-weather-icon .stars { fill: #e2b65c; }
+.sleep-weather-icon .stroke { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
+.sleep-weather-condition {
+  position: absolute;
+  right: 8%;
+  bottom: 13%;
+  max-width: 46%;
+  color: #c3c4ce;
+  font-size: clamp(16px, 2.1vw, 27px);
+  font-size: clamp(16px, 2.1cqw, 27px);
+  font-weight: 500;
+  letter-spacing: .11em;
+  text-align: right;
+  text-transform: uppercase;
+}
+.dashboard.weather-refreshing .sleep-weather-icon { animation: weather-refresh-pulse 1.05s ease-in-out infinite; }
+.dashboard.weather-updated .sleep-weather-icon { animation: weather-update-arrive .72s cubic-bezier(.2,.85,.25,1); }
+
 @media (max-aspect-ratio: 1/1) {
-  .dashboard.sleep-mode .clock-row,
-  .dashboard.sleep-mode[data-display-style="classic-weather"] .clock-row {
-    height: min(84dvh, 135vw);
-  }
+  .sleep-clock-time { width: 94%; font-size: min(35vw, 47vh); font-size: min(35cqw, 47cqh); }
+  .sleep-clock-seconds { bottom: 8%; }
+  .sleep-weather-card { min-height: 440px; border-radius: 26px; }
+  .sleep-weather-head { top: 7%; left: 7%; max-width: 62%; }
+  .sleep-weather-location { font-size: clamp(17px, 3.6cqw, 30px); }
+  .sleep-weather-date { font-size: clamp(13px, 2.8cqw, 21px); }
+  .sleep-weather-temperature { top: 23%; right: 7%; font-size: min(48cqw, 35cqh); }
+  .sleep-weather-icon { left: 5%; bottom: 28%; width: min(54cqw, 36cqh); height: min(54cqw, 36cqh); }
+  .sleep-weather-condition { right: 7%; bottom: 12%; max-width: 44%; font-size: clamp(13px, 3.5cqw, 20px); }
+}
 
-  .dashboard.sleep-mode .flip-clock,
-  .dashboard.sleep-mode .seconds-group {
-    flex-direction: column;
-    gap: clamp(8px, 1.4vh, 18px);
-  }
-
-  .dashboard.sleep-mode .flip-clock > .time-group {
-    width: 100%;
-    height: 0;
-    flex: 1 1 0;
-  }
-
-  .dashboard.sleep-mode .flip-clock > .time-group > .flip-digit {
-    font-size: min(42vw, 36dvh);
-  }
-
-  .dashboard.sleep-mode .flip-clock > .clock-separator {
-    flex-direction: row;
-    gap: clamp(28px, 8vw, 52px);
-    margin: 0;
-  }
+@media (prefers-reduced-motion: reduce) {
+  .sleep-view { transition: none; transform: none; }
+  .dashboard.weather-refreshing .sleep-weather-icon,
+  .dashboard.weather-updated .sleep-weather-icon { animation: none !important; }
 }
 
 @media (prefers-reduced-motion: reduce) {

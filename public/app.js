@@ -11,6 +11,8 @@ const state = {
   lastClockSecond: -1,
   lastDateKey: '',
   sleepActive: false,
+  sleepView: 'clock',
+  sleepCycleTimer: null,
   sleepManualActive: false,
   sleepScheduleBypass: false,
   sleepAwakeUntil: 0,
@@ -28,6 +30,20 @@ const state = {
 
 const elements = {
   dashboard: document.querySelector('#dashboard'),
+  sleepAmbient: document.querySelector('#sleep-ambient'),
+  sleepClockView: document.querySelector('#sleep-clock-view'),
+  sleepWeatherView: document.querySelector('#sleep-weather-view'),
+  sleepHourTens: document.querySelector('#sleep-hour-tens'),
+  sleepHourOnes: document.querySelector('#sleep-hour-ones'),
+  sleepMinuteTens: document.querySelector('#sleep-minute-tens'),
+  sleepMinuteOnes: document.querySelector('#sleep-minute-ones'),
+  sleepClockTime: document.querySelector('.sleep-clock-time'),
+  sleepClockSeconds: document.querySelector('#sleep-clock-seconds'),
+  sleepWeatherLocation: document.querySelector('#sleep-weather-location'),
+  sleepWeatherDate: document.querySelector('#sleep-weather-date'),
+  sleepWeatherTemperature: document.querySelector('#sleep-weather-temperature'),
+  sleepWeatherIcon: document.querySelector('#sleep-weather-icon'),
+  sleepWeatherCondition: document.querySelector('#sleep-weather-condition'),
   digits: [...document.querySelectorAll('.flip-digit')],
   secondsGroup: document.querySelector('#seconds-group'),
   dateLine: document.querySelector('#date-line'),
@@ -94,11 +110,11 @@ const messages = {
     typography: 'Display font', fontModern: 'Modern', fontCondensed: 'Condensed', fontRoboto: 'Roboto', fontMono: 'Monospace', fontHelp: 'Applies to the clock digits, labels, weather, date, calendar, and settings.',
     clockFace: 'Clock face', focusCards: 'Focus cards', splitCards: 'Split cards', twinDark: 'Slate cards', twinLight: 'Ivory panels', mechanical: 'Mechanical', minimal: 'Minimal',
     clockFaceHelp: 'Each face changes the cards, divider, shadows, and number treatment.',
-    showSeconds: 'Show seconds', showSecondsHelp: 'Show animated seconds in the clock corner', blinkSeparator: 'Blinking separator', blinkSeparatorHelp: 'Blink only when seconds are hidden; stay steady when seconds are shown',
+    showSeconds: 'Show seconds', seconds: 'seconds', showSecondsHelp: 'Show animated seconds in the clock corner', blinkSeparator: 'Blinking separator', blinkSeparatorHelp: 'Blink only when seconds are hidden; stay steady when seconds are shown',
     showDate: 'Show date & day', showDateHelp: 'Display the date under the clock', clockLayout: 'Clock layout', layout: 'Layout', auto: 'Auto', horizontal: 'Horizontal', vertical: 'Vertical',
     position: 'Position', center: 'Center', top: 'Top', fill: 'Fill space', fillHelp: 'Expand the clock to use all available width and height above the weather.', size: 'Size', cornerRadius: 'Corner radius',
-    sleepSchedule: 'Sleep schedule', sleepEnabled: 'Enable sleep mode', sleepEnabledHelp: 'Show only a dimmed clock during the selected hours', sleepStart: 'Starts', sleepEnd: 'Ends', sleepDays: 'Active days',
-    sleepBrightness: 'Sleep brightness', sleepSeconds: 'Seconds during sleep', sleepSecondsHelp: 'Keep compact seconds visible in the clock corner', sleepHelp: 'The schedule follows the dashboard timezone. Tap the sleeping clock once to reveal controls temporarily.', previewSleep: 'Preview for 15 seconds', oledProtection: 'OLED protection', pixelShiftStrength: 'Pixel shifting strength', off: 'Off', lowStrength: 'Low', mediumStrength: 'Medium', highStrength: 'High', pixelShiftInterval: 'Shift interval', oledProtectionHelp: 'Moves the entire dashboard by a few pixels at the selected interval to reduce static OLED wear.',
+    sleepSchedule: 'Sleep schedule', sleepEnabled: 'Enable sleep mode', sleepEnabledHelp: 'Alternate a full-screen clock and current weather during the selected hours', sleepStart: 'Starts', sleepEnd: 'Ends', sleepDays: 'Active days',
+    sleepBrightness: 'Sleep brightness', sleepSeconds: 'Seconds during sleep', sleepSecondsHelp: 'Keep compact seconds visible in the clock corner', sleepHelp: 'The schedule follows the dashboard timezone. Tap the sleeping screen once to reveal controls temporarily.', previewSleep: 'Preview for 2 minutes', oledProtection: 'OLED protection', pixelShiftStrength: 'Pixel shifting strength', off: 'Off', lowStrength: 'Low', mediumStrength: 'Medium', highStrength: 'High', pixelShiftInterval: 'Shift interval', oledProtectionHelp: 'Moves the entire dashboard by a few pixels at the selected interval to reduce static OLED wear.',
     mondayShort: 'M', tuesdayShort: 'T', wednesdayShort: 'W', thursdayShort: 'T', fridayShort: 'F', saturdayShort: 'S', sundayShort: 'S', weatherLocation: 'Weather location', locationSource: 'Location source',
     cityName: 'City name', deviceLocation: 'Device location', city: 'City', cityPlaceholder: 'e.g. Timisoara, Romania',
     locationHelp: 'Device location needs browser permission and usually HTTPS on a LAN. Location names © OpenStreetMap contributors.', weatherRefresh: 'Weather refresh', weatherRefreshHelp: 'How often every connected display requests fresh weather data.', calendar: 'Calendar', publicCalendarUrl: 'Public iCal / ICS URL',
@@ -125,11 +141,11 @@ const messages = {
     typography: 'Font de afișare', fontModern: 'Modern', fontCondensed: 'Îngust', fontRoboto: 'Roboto', fontMono: 'Monospațiat', fontHelp: 'Se aplică cifrelor ceasului, etichetelor, vremii, datei, calendarului și setărilor.',
     clockFace: 'Aspectul ceasului', focusCards: 'Panouri Focus', splitCards: 'Cartele separate', twinDark: 'Panouri grafit', twinLight: 'Panouri fildeș', mechanical: 'Mecanic', minimal: 'Minimal',
     clockFaceHelp: 'Fiecare aspect schimbă panourile, separatorul, umbrele și stilul cifrelor.',
-    showSeconds: 'Afișează secundele', showSecondsHelp: 'Afișează secundele animate în colțul ceasului', blinkSeparator: 'Puncte intermitente', blinkSeparatorHelp: 'Clipesc numai când secundele sunt ascunse; rămân fixe când secundele sunt afișate',
+    showSeconds: 'Afișează secundele', seconds: 'secunde', showSecondsHelp: 'Afișează secundele animate în colțul ceasului', blinkSeparator: 'Puncte intermitente', blinkSeparatorHelp: 'Clipesc numai când secundele sunt ascunse; rămân fixe când secundele sunt afișate',
     showDate: 'Afișează data și ziua', showDateHelp: 'Arată data sub ceas', clockLayout: 'Aranjarea ceasului', layout: 'Aranjare', auto: 'Automat', horizontal: 'Orizontal', vertical: 'Vertical',
     position: 'Poziție', center: 'Centru', top: 'Sus', fill: 'Umple spațiul', fillHelp: 'Extinde ceasul pe toată lățimea și înălțimea disponibilă deasupra zonei meteo.', size: 'Mărime', cornerRadius: 'Rotunjire colțuri',
-    sleepSchedule: 'Program de somn', sleepEnabled: 'Activează modul de somn', sleepEnabledHelp: 'Afișează numai ceasul estompat în orele selectate', sleepStart: 'Începe', sleepEnd: 'Se termină', sleepDays: 'Zile active',
-    sleepBrightness: 'Luminozitate în somn', sleepSeconds: 'Secunde în timpul somnului', sleepSecondsHelp: 'Păstrează secundele compacte în colțul ceasului', sleepHelp: 'Programul urmează fusul orar al tabloului. Atinge o dată ceasul în repaus pentru a afișa temporar comenzile.', previewSleep: 'Previzualizare 15 secunde', oledProtection: 'Protecție OLED', pixelShiftStrength: 'Intensitate deplasare pixeli', off: 'Oprit', lowStrength: 'Redusă', mediumStrength: 'Medie', highStrength: 'Ridicată', pixelShiftInterval: 'Interval deplasare', oledProtectionHelp: 'Deplasează întregul tablou cu câțiva pixeli la intervalul ales pentru a reduce uzura statică OLED.',
+    sleepSchedule: 'Program de somn', sleepEnabled: 'Activează modul de somn', sleepEnabledHelp: 'Alternează pe tot ecranul ceasul și vremea curentă în orele selectate', sleepStart: 'Începe', sleepEnd: 'Se termină', sleepDays: 'Zile active',
+    sleepBrightness: 'Luminozitate în somn', sleepSeconds: 'Secunde în timpul somnului', sleepSecondsHelp: 'Păstrează secundele compacte în colțul ceasului', sleepHelp: 'Programul urmează fusul orar al tabloului. Atinge ecranul în repaus pentru a afișa temporar comenzile.', previewSleep: 'Previzualizare 2 minute', oledProtection: 'Protecție OLED', pixelShiftStrength: 'Intensitate deplasare pixeli', off: 'Oprit', lowStrength: 'Redusă', mediumStrength: 'Medie', highStrength: 'Ridicată', pixelShiftInterval: 'Interval deplasare', oledProtectionHelp: 'Deplasează întregul tablou cu câțiva pixeli la intervalul ales pentru a reduce uzura statică OLED.',
     mondayShort: 'L', tuesdayShort: 'M', wednesdayShort: 'M', thursdayShort: 'J', fridayShort: 'V', saturdayShort: 'S', sundayShort: 'D', weatherLocation: 'Locația meteo', locationSource: 'Sursa locației',
     cityName: 'Numele orașului', deviceLocation: 'Locația dispozitivului', city: 'Oraș', cityPlaceholder: 'ex. Timișoara, România',
     locationHelp: 'Locația dispozitivului necesită permisiunea browserului și, de obicei, HTTPS în rețeaua locală. Denumirile locațiilor © colaboratorii OpenStreetMap.', weatherRefresh: 'Actualizare vreme', weatherRefreshHelp: 'Cât de des solicită fiecare ecran conectat date meteo noi.', calendar: 'Calendar', publicCalendarUrl: 'Adresă publică iCal / ICS',
@@ -446,7 +462,21 @@ function syncClockPresentation() {
   elements.dashboard.classList.toggle('show-seconds', showSeconds);
   elements.dashboard.classList.toggle('blink-separator', state.settings.blinkSeparator && !showSeconds);
   elements.secondsGroup.hidden = !showSeconds;
+  elements.sleepClockSeconds.hidden = !state.settings.sleepShowSeconds;
   elements.dateLine.hidden = state.sleepActive || !state.settings.showDate;
+}
+
+function updateSleepClock(now) {
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
+  elements.sleepHourTens.textContent = hours[0];
+  elements.sleepHourOnes.textContent = hours[1];
+  elements.sleepMinuteTens.textContent = minutes[0];
+  elements.sleepMinuteOnes.textContent = minutes[1];
+  elements.sleepClockTime.setAttribute('aria-label', `${hours}:${minutes}`);
+  elements.sleepClockSeconds.textContent = seconds;
+  elements.sleepClockSeconds.setAttribute('aria-label', `${seconds} ${t('seconds')}`);
 }
 
 function applySettings() {
@@ -557,6 +587,15 @@ function isWithinSleepSchedule(now) {
   return current < end && settings.sleepDays.includes(previousDay);
 }
 
+function setSleepView(view) {
+  state.sleepView = view;
+  const isClock = view === 'clock';
+  elements.sleepClockView.classList.toggle('is-active', isClock);
+  elements.sleepClockView.setAttribute('aria-hidden', String(!isClock));
+  elements.sleepWeatherView.classList.toggle('is-active', !isClock);
+  elements.sleepWeatherView.setAttribute('aria-hidden', String(isClock));
+}
+
 function updateSleepMode(now) {
   const scheduled = isWithinSleepSchedule(now);
   if (!scheduled) state.sleepScheduleBypass = false;
@@ -565,6 +604,17 @@ function updateSleepMode(now) {
     || (scheduled && !state.sleepScheduleBypass);
   const changed = requested !== state.sleepActive;
   state.sleepActive = requested;
+  elements.sleepAmbient.hidden = !requested;
+  if (changed) {
+    clearInterval(state.sleepCycleTimer);
+    state.sleepCycleTimer = null;
+    setSleepView('clock');
+    if (requested) {
+      state.sleepCycleTimer = setInterval(() => {
+        setSleepView(state.sleepView === 'clock' ? 'weather' : 'clock');
+      }, 60_000);
+    }
+  }
   if (!requested) {
     state.sleepAwakeUntil = 0;
     elements.dashboard.classList.remove('sleep-awake');
@@ -594,6 +644,7 @@ function updateClock() {
   if (!state.settings) return;
   const now = localNow();
   updateSleepMode(now);
+  updateSleepClock(now);
   const showSeconds = effectiveShowSeconds();
   const hour = now.getHours();
   const time = `${String(hour).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}${showSeconds ? String(now.getSeconds()).padStart(2, '0') : ''}`;
@@ -611,6 +662,7 @@ function updateClock() {
       weekday: 'long', day: 'numeric', month: 'long',
       timeZone: state.weather?.timezone || state.config?.timeZone
     }).format(new Date());
+    elements.sleepWeatherDate.textContent = elements.dateLine.textContent;
     state.lastDateKey = dateKey;
   }
   updateDimming(now.getHours());
@@ -631,6 +683,21 @@ function formatSolarTime(value) {
   return match ? match[1] : '--:--';
 }
 
+function renderSleepWeather(data) {
+  const current = data?.current;
+  if (!current) return;
+  const isDay = current.is_day === true || Number(current.is_day) === 1;
+  const conditionKey = weatherLabelKeys[current.weather_code] || 'currentConditions';
+  elements.sleepWeatherLocation.textContent = data.locationName || elements.location.textContent;
+  elements.sleepWeatherTemperature.textContent = `${Math.round(current.temperature_2m)}°`;
+  elements.sleepWeatherIcon.innerHTML = weatherIcon(current.weather_code, isDay);
+  elements.sleepWeatherCondition.textContent = t(conditionKey);
+  elements.sleepWeatherDate.textContent = new Intl.DateTimeFormat(currentLocale(), {
+    weekday: 'long', day: 'numeric', month: 'long',
+    timeZone: data.timezone || state.config?.timeZone
+  }).format(new Date());
+}
+
 function renderWeather(data) {
   const current = data.current;
   const isDay = current.is_day === true || Number(current.is_day) === 1;
@@ -641,6 +708,7 @@ function renderWeather(data) {
   elements.currentIcon.innerHTML = weatherIcon(current.weather_code, isDay);
   elements.temperature.textContent = `${Math.round(current.temperature_2m)}°`;
   elements.condition.textContent = t(weatherLabelKeys[current.weather_code] || 'currentConditions');
+  renderSleepWeather(data);
   elements.feels.textContent = `${t('feels')} ${Math.round(current.apparent_temperature)}${degree} · ${t('humidity')} ${current.relative_humidity_2m}% · ${t('wind')} ${Math.round(current.wind_speed_10m)} ${data.currentUnits?.wind_speed_10m || ''}`;
 
   const todayHigh = data.daily?.temperature_2m_max?.[0];
@@ -1065,11 +1133,11 @@ function wireControls() {
     scheduleFocusRotation();
   });
   elements.previewSleep.addEventListener('click', () => {
-    state.sleepPreviewUntil = Date.now() + 15_000;
+    state.sleepPreviewUntil = Date.now() + 120_000;
     state.sleepAwakeUntil = 0;
     closeSettings();
     updateClock();
-    setTimeout(updateClock, 15_100);
+    setTimeout(updateClock, 120_100);
   });
   elements.weatherMode.addEventListener('change', () => { state.settings.weatherMode = elements.weatherMode.value; syncSettingsPanel(); });
   elements.themeToggle.addEventListener('click', async () => {
